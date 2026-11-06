@@ -102,6 +102,7 @@ function updateTime() {
   else if (hour >= 18 || hour < 9) scene = 'dusk';
   if (scene !== currentScene) {
     currentScene = scene;
+    $('screen').dataset.scene = scene;
     $('landscape').style.backgroundImage = `url('./assets/backgrounds/meadow_${scene}.png')`;
   }
   maybeReminder(date);
