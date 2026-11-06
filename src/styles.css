@@ -1,0 +1,84 @@
+:root { font-family: 'Trebuchet MS', system-ui, sans-serif; color: #fff; background: #26203c; font-synthesis: none; }
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+body { display: grid; place-items: center; background: radial-gradient(ellipse at 50% 25%, #806a9b, #30243d 70%, #1b1829); }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.app-shell { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 20px 10px; }
+.top-label { font-size: 12px; letter-spacing: .3em; color: #f7d7fc; text-shadow: 0 1px 5px #37214e; }
+.top-label span { color: #fa9ed4; font-size: 16px; }
+.phone { position: relative; width: 320px; height: 480px; max-width: 100%; border-radius: 22px; border: 5px solid #80628a; overflow: hidden; isolation: isolate; background: #c9b4df; box-shadow: 0 14px 45px #170d2b90, 0 0 0 2px #ba8fc9; user-select: none; -webkit-tap-highlight-color: transparent; }
+.landscape { position: absolute; inset: 0; background-image: url('../assets/backgrounds/meadow_day.png'); background-size: 100% 100%; image-rendering: auto; transition: background-image 1s ease, filter .6s ease; }
+.ambient-shadow { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(#322b5581, transparent 37%, transparent 57%, #24183b2a); }
+.lock-heading { position: absolute; top: 65px; width: 100%; text-align: center; pointer-events: none; z-index: 4; text-shadow: 0 2px 9px #58427fa6, 0 0 10px #fff4; }
+.date { font-size: 13px; color: #fff9ee; letter-spacing: .02em; }
+.time { display: block; font: 56px/1.1 Georgia, 'Times New Roman', serif; color: white; margin-top: 4px; letter-spacing: -.04em; }
+.pony-wrap { position: absolute; z-index: 3; left: 90px; top: 259px; width: 144px; height: 144px; pointer-events: none; transition: left .09s linear, top .28s ease; filter: drop-shadow(0 7px 3px #4257445f); transform-origin: center; }
+#ponySprite { width: 144px; height: 144px; image-rendering: pixelated; display: block; }
+.accessory { position: absolute; right: 7px; top: -2px; font-size: 21px; text-shadow: 0 1px 8px #fff7; transform: rotate(15deg); }
+.screen-tap { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
+.pet-tap { position: absolute; z-index: 5; top: 274px; left: 68px; width: 192px; height: 129px; background: transparent; border: 0; }
+.bubble { position: absolute; z-index: 12; top: 222px; left: 37px; right: 37px; text-align: center; opacity: 0; transform: translateY(4px); color: #fff; font-size: 11px; text-shadow: 0 2px 6px #4d2a65; border-radius: 16px; background: #54376dcc; border: 1px solid #ffe7f9b2; padding: 8px 12px; pointer-events: none; transition: opacity .2s, transform .2s; }
+.bubble.visible { opacity: 1; transform: translateY(0); }
+.ui-pearl { position: absolute; z-index: 2; bottom: 10px; left: calc(50% - 12px); font-size: 23px; color: #fff4fb; pointer-events: none; text-shadow: 0 0 14px #ecb0fb, 0 1px 8px #775b92; animation: twinkle 2.4s ease-in-out infinite; }
+@keyframes twinkle { 50% { opacity: .42; transform: translateY(2px); } }
+/* The HUD is a second state, NEVER visible on the lockscreen before a touch. */
+.hud { position: absolute; inset: 0; z-index: 7; pointer-events: none; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity .24s, transform .24s, visibility .24s; }
+.hud.open { pointer-events: auto; opacity: 1; visibility: visible; transform: translateY(0); }
+.status-petal { position: absolute; top: 145px; left: 52px; right: 52px; text-align: center; color: #fff; border-radius: 99px; padding: 6px 10px; font-size: 10px; background: #5c51798c; border: 1px solid #ffffff77; text-shadow: 0 1px 3px #4c2e58; backdrop-filter: blur(6px); }
+.stat-strip { position: absolute; top: 175px; left: 10px; right: 10px; display: grid; grid-template-columns: repeat(4, 1fr); background: #fffcffdd; border: 1px solid #ffffffc9; border-radius: 18px; padding: 8px 6px 9px; color: #3e415e; box-shadow: 0 3px 15px #594f7471; backdrop-filter: blur(7px); }
+.mini-stat { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9px; }
+.mini-icon { font-size: 17px; height: 20px; }
+.hearts { font-size: 13px; letter-spacing: -2px; white-space: nowrap; }
+.hearts span { color: #dfdfe4; } .hearts .on { color: #dd739c; }
+.action-dock { position: absolute; left: 8px; right: 8px; bottom: 35px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.action { border: 1px solid #fff9f3aa; border-radius: 15px; background: #fffffff0; box-shadow: 0 2px 10px #77597c91; color: #554768; height: 57px; display: flex; align-items: center; justify-content: center; gap: 4px; flex-direction: column; font-size: 10px; }
+.action-icon { font-size: 22px; line-height: 24px; }
+.action:active { transform: translateY(1px); background: #ffe9f6; }
+.open-menu { position: absolute; bottom: 6px; left: 36px; right: 36px; height: 24px; border-radius: 99px; background: #fff9ffdc; border: 1px solid #fff; color: #6e5179; font-size: 10px; box-shadow: 0 2px 6px #3f325055; }
+/* Only the deep menu is a bottom sheet; its top remains transparent to the landscape. */
+.sheet-wrap { position: absolute; inset: 0; z-index: 22; visibility: hidden; pointer-events: none; }
+.sheet-wrap.open { visibility: visible; pointer-events: auto; }
+.sheet-scrim { position: absolute; inset: 0; background: #1f163c70; border: 0; width: 100%; opacity: 0; transition: opacity .25s; }
+.sheet-wrap.open .sheet-scrim { opacity: 1; }
+.bottom-sheet { position: absolute; left: 0; right: 0; bottom: 0; height: auto; max-height: 355px; min-height: 190px; overflow: auto; padding: 11px 12px 17px; border-radius: 22px 22px 0 0; background: #fffcfff5; backdrop-filter: blur(12px); color: #4b4059; box-shadow: 0 -7px 35px #47345e4d; transform: translateY(101%); transition: transform .3s; }
+.sheet-wrap.open .bottom-sheet { transform: translateY(0); }
+.sheet-handle { width: 40px; height: 4px; border-radius: 99px; background: #ccb5ce; margin: 0 auto 11px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-head h2 { margin: 0; color: #504062; font-size: 17px; font-family: Georgia, serif; font-weight: normal; }
+.close-sheet { border: 0; border-radius: 50%; background: #ead6e8; color: #654f6f; height: 27px; width: 27px; font-size: 19px; }
+.sheet-tabs { display: flex; gap: 4px; margin: 10px 0; }
+.sheet-tabs button { flex: 1; min-width: 0; border: 0; border-radius: 9px; background: #eee6f1; padding: 8px 3px; font-size: 9px; color: #76617d; }
+.sheet-tabs button.active { background: #d4a4cf; color: #fff; }
+.sheet-content { font-size: 11px; line-height: 1.4; }
+.panel-sub { color: #796a7b; margin: 10px 0; }
+.panel-kicker { text-transform: uppercase; font-size: 9px; font-weight: bold; color: #b2759d; letter-spacing: .1em; margin: 12px 0 5px; }
+.panel-small { font-size: 10px; color: #8d7b8e; }
+.task { display: flex; justify-content: space-between; gap: 7px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee0ed; }
+.small-btn { flex-shrink: 0; border: 0; border-radius: 9px; background: #ca8fc2; color: #fff; padding: 7px 10px; font-size: 10px; }
+.small-btn.secondary { background: #9f94a3; }
+.small-btn:disabled { color: #97909b; background: #e7e1e9; }
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.shop-item { display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 125px; background: #f6eff7; border-radius: 13px; padding: 8px 6px; gap: 4px; text-align: center; }
+.shop-item b { font-size: 11px; }
+.shop-item small { color: #9b86a1; font-size: 9px; }
+.shop-emoji { font-size: 24px; }
+.level-progress { height: 9px; border-radius: 9px; background: #e5d8e7; overflow: hidden; }
+.level-progress span { height: 100%; background: linear-gradient(90deg,#d28dcc,#facdac); display: block; }
+.setting-line { display: flex; gap: 15px; justify-content: space-between; align-items: center; margin: 10px 0; }
+.setting-line select { background: #f9f3fb; border: 1px solid #d6bdd9; border-radius: 7px; padding: 5px; color: #56445e; }
+.under-note { text-align: center; color: #efdeee; font-size: 11px; max-width: 320px; margin: 4px 0 0; line-height: 1.5; }
+@media(max-height:600px){.app-shell { padding: 6px; }}
+@media(prefers-reduced-motion:reduce){.hud,.sheet-wrap,.sheet-scrim,.bottom-sheet,.pony-wrap { transition: none; }.ui-pearl { animation: none; }}
+/* Keep the pony touchable while the overlay is visible: controls opt into pointer events. */
+.hud.open { pointer-events: none; }
+.hud button { pointer-events: auto; }
+/* Changes of care action are only a temporary visual ambience, not a second screen. */
+.phone[data-action="feed"] .landscape { filter: sepia(.13) saturate(1.12); }
+.phone[data-action="play"] .landscape { filter: saturate(1.18) brightness(1.04); }
+.phone[data-action="sleep"] .landscape { filter: brightness(.82) hue-rotate(15deg); }
+.phone[data-action="wash"] .landscape { filter: hue-rotate(13deg) brightness(1.04); }
+
+/* The pony gets extra room when the compact touch HUD appears. */
+.phone.hud-active .pony-wrap { top: 238px; }

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d6b5dd">
+  <title>PonyGotchi · Rosy</title>
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <div class="top-label">PONYGOTCHI <span>♡</span></div>
+    <section class="phone" id="screen" aria-label="PonyGotchi, compagnon virtuel en portrait 320 par 480">
+      <div class="landscape" id="landscape" aria-hidden="true"></div>
+      <div class="ambient-shadow" aria-hidden="true"></div>
+      <div class="lock-heading">
+        <div class="date" id="todayDate">vendredi 6 novembre</div>
+        <time id="timeText" class="time">20:05</time>
+      </div>
+      <div class="pony-wrap" id="ponyWrap">
+        <img id="ponySprite" src="./assets/ponies/rosy/idle_00.png" alt="Rosy, petit poney rose" draggable="false">
+        <span id="ponyAccessory" class="accessory" aria-hidden="true"></span>
+      </div>
+      <button id="screenTap" class="screen-tap" aria-label="Toucher pour afficher les actions"></button>
+      <button id="petTap" class="pet-tap" aria-label="Caresser Rosy"></button>
+      <div class="bubble" id="bubble" aria-live="polite"></div>
+      <div class="ui-pearl" id="uiPearl" aria-hidden="true">♡</div>
+
+      <div class="hud" id="hud" aria-hidden="true">
+        <div class="status-petal" id="statusPetal">Rosy profite de la prairie ♡</div>
+        <div class="stat-strip" id="miniStats" aria-label="Besoins résumés"></div>
+        <div class="action-dock" aria-label="Actions avec Rosy">
+          <button class="action" data-care="feed"><span class="action-icon">🍎</span><span>Nourrir</span></button>
+          <button class="action" data-care="play"><span class="action-icon">🎮</span><span>Jouer</span></button>
+          <button class="action" data-care="sleep"><span class="action-icon">🌙</span><span>Dormir</span></button>
+          <button class="action" data-care="wash"><span class="action-icon">🫧</span><span>Laver</span></button>
+        </div>
+        <button class="open-menu" id="openMenu">✧ Quêtes · Atelier · Niveau</button>
+      </div>
+
+      <div class="sheet-wrap" id="sheetWrap" aria-hidden="true">
+        <button class="sheet-scrim" id="sheetScrim" aria-label="Fermer le menu"></button>
+        <section class="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+          <div class="sheet-handle"></div>
+          <div class="sheet-head"><h2 id="sheetTitle">Le monde de Rosy</h2><button id="closeSheet" class="close-sheet" aria-label="Fermer le menu">×</button></div>
+          <nav class="sheet-tabs" aria-label="Menus secondaires">
+            <button data-tab="missions" class="active">Quêtes</button>
+            <button data-tab="shop">Atelier</button>
+            <button data-tab="levels">Niveau</button>
+            <button data-tab="settings">Réglages</button>
+          </nav>
+          <div id="sheetContent" class="sheet-content"></div>
+        </section>
+      </div>
+    </section>
+    <p class="under-note">Touche l'écran pour afficher le mini-menu. Touche Rosy pour la caresser.</p>
+  </main>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
