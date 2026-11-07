@@ -20,12 +20,13 @@ export function emptyDay(date = new Date()) {
 
 export function newGame(date = new Date()) {
   return {
-    version: 8,
+    version: 10,
     pet: { hunger: 82, happiness: 90, energy: 78, hygiene: 88, level: 1, xp: 0, stars: 30 },
     daily: emptyDay(date),
     inventory: ['none'],
     equipped: 'none',
-    settings: { waterReminder: false, waterMinutes: 90, nextWaterAt: 0 },
+    explored: [],
+    settings: { waterReminder: false, waterMinutes: 90, nextWaterAt: 0, clockOffsetMs: 0 },
     lastCareAward: {},
     updatedAt: date.getTime(),
   };
@@ -42,12 +43,24 @@ export function restoreGame(raw, date = new Date()) {
     inventory: Array.isArray(raw.inventory) ? [...new Set(['none', ...raw.inventory])] : ['none'],
     lastCareAward: raw.lastCareAward || {},
   };
+  merged.explored = Array.isArray(raw.explored) ? [...new Set(raw.explored.filter(id => ['meadow','clearing','star'].includes(id)))] : [];
+  if (!Number.isFinite(merged.settings.clockOffsetMs) || Math.abs(merged.settings.clockOffsetMs) > 86400000) merged.settings.clockOffsetMs = 0;
   for (const k of ['hunger', 'happiness', 'energy', 'hygiene']) {
     merged.pet[k] = clamp(Number(merged.pet[k]) || 0);
   }
-  merged.pet.stars = Math.max(0, Number(merged.pet.stars) || 0);
-  merged.pet.level = Math.max(1, Math.floor(Number(merged.pet.level) || 1));
-  merged.pet.xp = Math.max(0, Number(merged.pet.xp) || 0);
+  const bounded = (v, fallback, max) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(max, Math.floor(Number(v)))) : fallback;
+  merged.version = 10;
+  merged.pet.stars = bounded(merged.pet.stars, 30, 10000000);
+  merged.pet.level = Math.max(1, bounded(merged.pet.level, 1, 10000));
+  merged.pet.xp = bounded(merged.pet.xp, 0, xpThreshold(merged.pet.level) - 1);
+  merged.inventory = merged.inventory.filter(id => ITEMS.some(item => item.id === id));
+  merged.daily.water = bounded(merged.daily.water, 0, 1000000);
+  for (const id of ['morning', 'noon', 'evening']) merged.daily.meals[id] = merged.daily.meals[id] === true;
+  for (const id of ['movement', 'pause', 'mealsBonus']) merged.daily[id] = merged.daily[id] === true;
+  merged.settings.waterReminder = merged.settings.waterReminder === true;
+  if (![60,90,120].includes(merged.settings.waterMinutes)) merged.settings.waterMinutes = 90;
+  merged.settings.nextWaterAt = bounded(merged.settings.nextWaterAt, 0, 8640000000000000);
+  merged.lastCareAward = Object.fromEntries(['feed','play','sleep','wash'].map(id => [id, bounded(raw.lastCareAward?.[id], 0, 8640000000000000)]));
   if (merged.daily.date !== localDateKey(date)) merged.daily = emptyDay(date);
   if (!ITEMS.some((i) => i.id === merged.equipped) || !merged.inventory.includes(merged.equipped)) merged.equipped = 'none';
   merged.updatedAt = Number.isFinite(merged.updatedAt) ? merged.updatedAt : date.getTime();
@@ -144,4 +157,28 @@ export function buyOrEquip(game, itemId) {
   }
   game.equipped = itemId;
   return { ok: true, item };
+}
+
+// One-time discoveries preserve the three validated landscapes.
+export const PLACES = [
+  { id: 'meadow', label: 'Fleurs de la prairie', level: 1 },
+  { id: 'clearing', label: 'Secret de la clairière', level: 2 },
+  { id: 'star', label: 'Étoile du soir', level: 3 },
+];
+export function explore(game, id) {
+  const place = PLACES.find(p => p.id === id);
+  if (!place || game.pet.level < place.level || game.explored.includes(id)) return false;
+  game.explored.push(id);
+  grant(game, { stars: 5, xp: 10 });
+  return true;
+}
+export function setManualTime(game, value, now = new Date()) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return false;
+  const [hour, minute] = value.split(':').map(Number);
+  const target = new Date(now); target.setHours(hour, minute, 0, 0);
+  game.settings.clockOffsetMs = target.getTime() - now.getTime();
+  return true;
+}
+export function displayDate(game, now = new Date()) {
+  return new Date(now.getTime() + game.settings.clockOffsetMs);
 }

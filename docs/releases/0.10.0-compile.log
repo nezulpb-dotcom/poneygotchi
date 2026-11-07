@@ -1,0 +1,10 @@
+arduino-cli  Version: 1.3.1 Commit: 08ff7e2b Date: 2025-08-28T13:51:45Z
+
+["/workspace/toolchains-repro/bin/arduino-cli", "--config-file", "/workspace/toolchains-repro/arduino-cli.yaml", "compile", "--fqbn", "espressif:esp32:esp32:PSRAM=enabled,FlashMode=dio,FlashFreq=40,FlashSize=4M", "--jobs", "2", "--build-path", "/workspace/poneygotchi/.build/arduino", "--output-dir", "/workspace/poneygotchi/.build/firmware", "--build-property", "compiler.cpp.extra_flags=-include \"/workspace/poneygotchi/firmware/PonyGotchi/BoardConfig.h\"", "--build-property", "runtime.tools.ctags.path=/workspace/toolchains-repro/tools/ctags", "--build-property", "runtime.tools.xtensa-esp32-elf-gcc.path=/workspace/toolchains-repro/tools/xtensa-esp32-elf-gcc", "--build-property", "runtime.tools.esptool_py.path=/workspace/toolchains-repro/tools/esptool_py", "/workspace/poneygotchi/firmware/PonyGotchi"]
+Error initializing instance: Error loading hardware platform: discovery builtin:serial-discovery not found
+Error initializing instance: Error loading hardware platform: discovery builtin:mdns-discovery not found
+Error initializing instance: Error loading hardware platform: discovery builtin:dfu-discovery not found
+Error initializing instance: Error loading hardware platform: discovery builtin:serial-discovery not found
+Error initializing instance: Error loading hardware platform: discovery builtin:mdns-discovery not found
+Sketch uses 394181 bytes (30%) of program storage space. Maximum is 1310720 bytes.
+Global variables use 22816 bytes (6%) of dynamic memory, leaving 304864 bytes for local variables. Maximum is 327680 bytes.

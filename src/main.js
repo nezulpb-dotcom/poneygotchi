@@ -1,5 +1,5 @@
 import { loadGame, saveGame } from './core/storage.js';
-import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp } from './core/game.js';
+import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp, explore, setManualTime, displayDate } from './core/game.js';
 import { PonyAnimator } from './graphics/pony.js';
 import { renderMiniStats, renderPanel } from './ui/panels.js';
 
@@ -92,10 +92,10 @@ function setSceneForAction(action) {
   sceneTimer = setTimeout(() => { delete $('screen').dataset.action; }, 3400);
 }
 function updateTime() {
-  const date = new Date();
+  const date = displayDate(game);
   $('timeText').textContent = date.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
   $('todayDate').textContent = date.toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
-  advanceDay(game, date);
+  advanceDay(game, new Date());
   let scene = 'day';
   const hour = date.getHours();
   if (hour >= 21 || hour < 7) scene = 'night';
@@ -105,7 +105,7 @@ function updateTime() {
     $('screen').dataset.scene = scene;
     $('landscape').style.backgroundImage = `url('./assets/backgrounds/meadow_${scene}.png')`;
   }
-  maybeReminder(date);
+  maybeReminder(new Date());
 }
 function maybeReminder(now) {
   const s = game.settings;
@@ -160,6 +160,10 @@ for (const button of document.querySelectorAll('[data-tab]')) button.addEventLis
 $('sheetContent').addEventListener('click', (e) => {
   const button = e.target.closest('button');
   if (!button) return;
+  if (button.dataset.explore) {
+    if (explore(game, button.dataset.explore)) { pony.pet(); say('Une découverte ! +5 étoiles, +10 XP'); drawPanel(true); save(); }
+  }
+  if (button.dataset.clockReset) { game.settings.clockOffsetMs = 0; save(); updateTime(); }
   if (button.dataset.quest) {
     const type = button.dataset.quest;
     const result = completeQuest(game, type);
@@ -182,6 +186,7 @@ $('sheetContent').addEventListener('click', (e) => {
   }
 });
 $('sheetContent').addEventListener('change', (e) => {
+  if (e.target.id === 'manualTime' && setManualTime(game, e.target.value)) { save(); updateTime(); }
   if (e.target.id === 'reminderToggle') {
     game.settings.waterReminder = e.target.checked;
     game.settings.nextWaterAt = Date.now() + game.settings.waterMinutes * 60_000;

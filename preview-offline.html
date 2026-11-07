@@ -166,6 +166,7 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
             <button data-tab="missions" class="active">Quêtes</button>
             <button data-tab="shop">Atelier</button>
             <button data-tab="levels">Niveau</button>
+            <button data-tab="explore">Explorer</button>
             <button data-tab="settings">Réglages</button>
           </nav>
           <div id="sheetContent" class="sheet-content"></div>
@@ -199,12 +200,13 @@ function emptyDay(date = new Date()) {
 
 function newGame(date = new Date()) {
   return {
-    version: 8,
+    version: 10,
     pet: { hunger: 82, happiness: 90, energy: 78, hygiene: 88, level: 1, xp: 0, stars: 30 },
     daily: emptyDay(date),
     inventory: ['none'],
     equipped: 'none',
-    settings: { waterReminder: false, waterMinutes: 90, nextWaterAt: 0 },
+    explored: [],
+    settings: { waterReminder: false, waterMinutes: 90, nextWaterAt: 0, clockOffsetMs: 0 },
     lastCareAward: {},
     updatedAt: date.getTime(),
   };
@@ -221,12 +223,24 @@ function restoreGame(raw, date = new Date()) {
     inventory: Array.isArray(raw.inventory) ? [...new Set(['none', ...raw.inventory])] : ['none'],
     lastCareAward: raw.lastCareAward || {},
   };
+  merged.explored = Array.isArray(raw.explored) ? [...new Set(raw.explored.filter(id => ['meadow','clearing','star'].includes(id)))] : [];
+  if (!Number.isFinite(merged.settings.clockOffsetMs) || Math.abs(merged.settings.clockOffsetMs) > 86400000) merged.settings.clockOffsetMs = 0;
   for (const k of ['hunger', 'happiness', 'energy', 'hygiene']) {
     merged.pet[k] = clamp(Number(merged.pet[k]) || 0);
   }
-  merged.pet.stars = Math.max(0, Number(merged.pet.stars) || 0);
-  merged.pet.level = Math.max(1, Math.floor(Number(merged.pet.level) || 1));
-  merged.pet.xp = Math.max(0, Number(merged.pet.xp) || 0);
+  const bounded = (v, fallback, max) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(max, Math.floor(Number(v)))) : fallback;
+  merged.version = 10;
+  merged.pet.stars = bounded(merged.pet.stars, 30, 10000000);
+  merged.pet.level = Math.max(1, bounded(merged.pet.level, 1, 10000));
+  merged.pet.xp = bounded(merged.pet.xp, 0, xpThreshold(merged.pet.level) - 1);
+  merged.inventory = merged.inventory.filter(id => ITEMS.some(item => item.id === id));
+  merged.daily.water = bounded(merged.daily.water, 0, 1000000);
+  for (const id of ['morning', 'noon', 'evening']) merged.daily.meals[id] = merged.daily.meals[id] === true;
+  for (const id of ['movement', 'pause', 'mealsBonus']) merged.daily[id] = merged.daily[id] === true;
+  merged.settings.waterReminder = merged.settings.waterReminder === true;
+  if (![60,90,120].includes(merged.settings.waterMinutes)) merged.settings.waterMinutes = 90;
+  merged.settings.nextWaterAt = bounded(merged.settings.nextWaterAt, 0, 8640000000000000);
+  merged.lastCareAward = Object.fromEntries(['feed','play','sleep','wash'].map(id => [id, bounded(raw.lastCareAward?.[id], 0, 8640000000000000)]));
   if (merged.daily.date !== localDateKey(date)) merged.daily = emptyDay(date);
   if (!ITEMS.some((i) => i.id === merged.equipped) || !merged.inventory.includes(merged.equipped)) merged.equipped = 'none';
   merged.updatedAt = Number.isFinite(merged.updatedAt) ? merged.updatedAt : date.getTime();
@@ -323,6 +337,30 @@ function buyOrEquip(game, itemId) {
   }
   game.equipped = itemId;
   return { ok: true, item };
+}
+
+// One-time discoveries preserve the three validated landscapes.
+const PLACES = [
+  { id: 'meadow', label: 'Fleurs de la prairie', level: 1 },
+  { id: 'clearing', label: 'Secret de la clairière', level: 2 },
+  { id: 'star', label: 'Étoile du soir', level: 3 },
+];
+function explore(game, id) {
+  const place = PLACES.find(p => p.id === id);
+  if (!place || game.pet.level < place.level || game.explored.includes(id)) return false;
+  game.explored.push(id);
+  grant(game, { stars: 5, xp: 10 });
+  return true;
+}
+function setManualTime(game, value, now = new Date()) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return false;
+  const [hour, minute] = value.split(':').map(Number);
+  const target = new Date(now); target.setHours(hour, minute, 0, 0);
+  game.settings.clockOffsetMs = target.getTime() - now.getTime();
+  return true;
+}
+function displayDate(game, now = new Date()) {
+  return new Date(now.getTime() + game.settings.clockOffsetMs);
 }
 
 
@@ -457,8 +495,14 @@ function renderPanel(tab, game) {
         <p class="panel-small">Chaque niveau donne 15 étoiles ✧ et ouvre progressivement des accessoires.</p>
         <div class="panel-kicker">Besoins de Rosy</div>
         ${[['💗 Bonheur',pet.happiness],['🍎 Faim',pet.hunger],['⚡ Énergie',pet.energy],['💧 Propreté',pet.hygiene]].map(([k,v])=>`<div class="task"><span>${k}</span><b>${Math.round(v)}%</b></div>`).join('')}`;
+    case 'explore':
+      return `<p class="panel-sub">De petites découvertes avec Rosy. Chaque lieu donne une récompense unique, sans changer les paysages validés.</p>
+        ${PLACES.map(p => `<div class="task"><span>${p.label}</span><button class="small-btn" data-explore="${p.id}" ${game.pet.level < p.level || game.explored.includes(p.id) ? 'disabled' : ''}>${game.explored.includes(p.id) ? '✓ Découvert' : game.pet.level < p.level ? 'Niv. ' + p.level : 'Explorer'}</button></div>`).join('')}`;
     case 'settings':
       return `<div class="panel-sub">Les données sont conservées localement dans ton navigateur. Les rappels fonctionnent uniquement tant que la page est ouverte.</div>
+        <label class="setting-line">Horloge manuelle <input id="manualTime" type="time" aria-label="Heure manuelle"></label>
+        <button class="small-btn" data-clock-reset="true">Heure du PC</button>
+        <p class="panel-small">L’heure affichée ne change ni les quêtes ni les rappels réels.</p>
         <label class="setting-line">Rappels d’eau (facultatifs) <input id="reminderToggle" type="checkbox" ${game.settings.waterReminder ? 'checked' : ''}></label>
         <label class="setting-line">Intervalle <select id="reminderInterval">
           ${[60,90,120].map(n=>`<option value="${n}" ${game.settings.waterMinutes === n ? 'selected' : ''}>${n} min</option>`).join('')}</select></label>
@@ -561,10 +605,10 @@ function setSceneForAction(action) {
   sceneTimer = setTimeout(() => { delete $('screen').dataset.action; }, 3400);
 }
 function updateTime() {
-  const date = new Date();
+  const date = displayDate(game);
   $('timeText').textContent = date.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
   $('todayDate').textContent = date.toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
-  advanceDay(game, date);
+  advanceDay(game, new Date());
   let scene = 'day';
   const hour = date.getHours();
   if (hour >= 21 || hour < 7) scene = 'night';
@@ -574,7 +618,7 @@ function updateTime() {
     $('screen').dataset.scene = scene;
     $('landscape').style.backgroundImage = `url('${BG_DATA[scene]}')`;
   }
-  maybeReminder(date);
+  maybeReminder(new Date());
 }
 function maybeReminder(now) {
   const s = game.settings;
@@ -629,6 +673,10 @@ for (const button of document.querySelectorAll('[data-tab]')) button.addEventLis
 $('sheetContent').addEventListener('click', (e) => {
   const button = e.target.closest('button');
   if (!button) return;
+  if (button.dataset.explore) {
+    if (explore(game, button.dataset.explore)) { pony.pet(); say('Une découverte ! +5 étoiles, +10 XP'); drawPanel(true); save(); }
+  }
+  if (button.dataset.clockReset) { game.settings.clockOffsetMs = 0; save(); updateTime(); }
   if (button.dataset.quest) {
     const type = button.dataset.quest;
     const result = completeQuest(game, type);
@@ -651,6 +699,7 @@ $('sheetContent').addEventListener('click', (e) => {
   }
 });
 $('sheetContent').addEventListener('change', (e) => {
+  if (e.target.id === 'manualTime' && setManualTime(game, e.target.value)) { save(); updateTime(); }
   if (e.target.id === 'reminderToggle') {
     game.settings.waterReminder = e.target.checked;
     game.settings.nextWaterAt = Date.now() + game.settings.waterMinutes * 60_000;

@@ -1,0 +1,30 @@
+{
+  "esp32": {
+    "url": "https://github.com/espressif/arduino-esp32/releases/download/2.0.17/esp32-2.0.17.zip",
+    "checksum": "SHA-256:1f8658d4b18a8001ce782142ad08164af2991d70b83a147c3437a6ee30a9b225"
+  },
+  "xtensa-esp32-elf-gcc": {
+    "url": "https://github.com/espressif/crosstool-NG/releases/download/esp-2021r2-patch5/xtensa-esp32-elf-gcc8_4_0-esp-2021r2-patch5-linux-amd64.tar.gz",
+    "checksum": "SHA-256:8ef14e0409c2011b41e504a30f70d3e35287313a795d1f2462ad2cd0e2052d37"
+  },
+  "esptool_py": {
+    "url": "https://github.com/espressif/arduino-esp32/releases/download/2.0.7/esptool-v4.5.1-src.tar.gz",
+    "checksum": "SHA-256:aa06831a7d88d8ccde4ea21241e983a08dbdae967290e181658b0d18bffc8f86"
+  },
+  "mkspiffs": {
+    "url": "https://github.com/igrr/mkspiffs/releases/download/0.2.3/mkspiffs-0.2.3-arduino-esp32-linux64.tar.gz",
+    "checksum": "SHA-256:5e1a4ff41385e842f389f6b5254102a547e566a06b49babeffa93ef37115cb5d"
+  },
+  "mklittlefs": {
+    "url": "https://github.com/earlephilhower/esp-quick-toolchain/releases/download/3.0.0-gnu12/x86_64-linux-gnu.mklittlefs-c41e51a.200706.tar.gz",
+    "checksum": "SHA-256:66e84dda0aad747517da3785125e05738a540948aab2b7eaa02855167a1eea53"
+  },
+  "arduino-cli": {
+    "url": "https://github.com/arduino/arduino-cli/releases/download/v1.3.1/arduino-cli_1.3.1_Linux_64bit.tar.gz",
+    "checksum": "SHA-256:376428d7d45be640c00812a71612e1742edc2f5f9ee3742a2d6da7870e079588"
+  },
+  "ctags": {
+    "url": "https://github.com/arduino/ctags/releases/download/5.8-arduino11/ctags-5.8-arduino11-x86_64-pc-linux-gnu.tar.bz2",
+    "checksum": "SHA-512:043cec9c105ff35ba09824ac1f6d84ae7f2bddeea4afe6c0268394611253633e20bc6206945f773dedc217b87804b0f5066efaf685496a48b32d1775c7e62d36"
+  }
+}

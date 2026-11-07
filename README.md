@@ -1,3 +1,13 @@
+# PonyGotchi 0.10.0 — fondation CrowPanel expérimentale
+
+Cette version ajoute un firmware Arduino pour le **DIS05035H V2.2**, une chaîne de compilation figée, les conversions SD des trois backgrounds validés et une procédure Windows. Le simulateur conserve le lockscreen, les soins et les menus secondaires ; il ajoute une horloge manuelle et des découvertes progressives.
+
+- [Audit et décisions techniques](docs/AUDIT_CROWPANEL.md)
+- [Compilation et statut de validation](docs/releases/0.10.0.md)
+- [Installation Windows et restauration](docs/INSTALL_WINDOWS.md)
+
+**Studio 1.2 n'est pas intégré : son ZIP source est absent du dépôt et de cette session. Aucun essai matériel du nouveau firmware n'a été réalisé.** Les instructions v0.8 ci-dessous décrivent l'héritage navigateur.
+
 # 🦄 PonyGotchi v0.8 — Projet prêt pour Codex
 
 **Un compagnon virtuel rose, en pixel art féerique, pensé pour un écran vertical de 320 × 480 pixels.** La priorité n'est pas un tableau de bord mais une scène vivante : Rosy se déplace sous une horloge ; le joueur touche l'écran pour faire apparaître une interface secondaire discrète.

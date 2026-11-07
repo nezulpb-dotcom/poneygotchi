@@ -1,9 +1,9 @@
 {
   "name": "ponygotchi-codex-v08",
-  "version": "0.8.0",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
-  "description": "PonyGotchi v0.8 — lockscreen vivant, HUD discret, simulateur HTML sans dépendances",
+  "description": "PonyGotchi — compagnon rétro et fondation expérimentale CrowPanel V2.2",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "start": "node scripts/serve.mjs",

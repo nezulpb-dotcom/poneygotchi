@@ -25,3 +25,36 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Check touch UI and browser JavaScript errors
         run: python tests/browser-smoke.py
+
+  crowpanel-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned Python build tools
+        run: |
+          python -m venv .build/venv
+          .build/venv/bin/pip install -r firmware/requirements-build.txt
+      - name: Test portable firmware rules
+        run: |
+          c++ -std=c++11 -Wall -Wextra -Werror -Ifirmware/PonyGotchi tests/firmware/game_test.cpp -o /tmp/pony-test
+          /tmp/pony-test
+      - name: Install verified Arduino toolchain
+        run: python scripts/bootstrap_toolchain.py --destination "$RUNNER_TEMP/pony-toolchain"
+      - name: Compile actual ESP32 firmware
+        run: |
+          export PATH="$PWD/.build/venv/bin:$PATH"
+          python scripts/build_firmware.py --toolchain "$RUNNER_TEMP/pony-toolchain"
+      - name: Test and convert validated assets
+        run: |
+          .build/venv/bin/python -m unittest discover -s tests -p 'test_*.py'
+          .build/venv/bin/python scripts/convert_firmware_assets.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crowpanel-esp32-firmware
+          path: |
+            .build/firmware/*.bin
+            .build/firmware/compile.log
+            .build/sd

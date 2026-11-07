@@ -1,4 +1,4 @@
-import { ITEMS, xpThreshold } from '../core/game.js';
+import { ITEMS, xpThreshold, PLACES } from '../core/game.js';
 
 const hearts = (value) => {
   const filled = Math.max(0, Math.min(3, Math.round(value / 100 * 3)));
@@ -47,8 +47,14 @@ export function renderPanel(tab, game) {
         <p class="panel-small">Chaque niveau donne 15 étoiles ✧ et ouvre progressivement des accessoires.</p>
         <div class="panel-kicker">Besoins de Rosy</div>
         ${[['💗 Bonheur',pet.happiness],['🍎 Faim',pet.hunger],['⚡ Énergie',pet.energy],['💧 Propreté',pet.hygiene]].map(([k,v])=>`<div class="task"><span>${k}</span><b>${Math.round(v)}%</b></div>`).join('')}`;
+    case 'explore':
+      return `<p class="panel-sub">De petites découvertes avec Rosy. Chaque lieu donne une récompense unique, sans changer les paysages validés.</p>
+        ${PLACES.map(p => `<div class="task"><span>${p.label}</span><button class="small-btn" data-explore="${p.id}" ${game.pet.level < p.level || game.explored.includes(p.id) ? 'disabled' : ''}>${game.explored.includes(p.id) ? '✓ Découvert' : game.pet.level < p.level ? 'Niv. ' + p.level : 'Explorer'}</button></div>`).join('')}`;
     case 'settings':
       return `<div class="panel-sub">Les données sont conservées localement dans ton navigateur. Les rappels fonctionnent uniquement tant que la page est ouverte.</div>
+        <label class="setting-line">Horloge manuelle <input id="manualTime" type="time" aria-label="Heure manuelle"></label>
+        <button class="small-btn" data-clock-reset="true">Heure du PC</button>
+        <p class="panel-small">L’heure affichée ne change ni les quêtes ni les rappels réels.</p>
         <label class="setting-line">Rappels d’eau (facultatifs) <input id="reminderToggle" type="checkbox" ${game.settings.waterReminder ? 'checked' : ''}></label>
         <label class="setting-line">Intervalle <select id="reminderInterval">
           ${[60,90,120].map(n=>`<option value="${n}" ${game.settings.waterMinutes === n ? 'selected' : ''}>${n} min</option>`).join('')}</select></label>
