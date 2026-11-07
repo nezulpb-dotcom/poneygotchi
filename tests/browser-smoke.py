@@ -1,11 +1,20 @@
 """Smoke-test the offline preview using Playwright + Chromium (optional Python tools)."""
 from pathlib import Path
+import os
 from playwright.sync_api import sync_playwright
 
 root = Path(__file__).resolve().parents[1]
 html = (root/'preview-offline.html').read_text('utf-8')
 with sync_playwright() as pw:
-    browser = pw.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox'])
+    # Prefer the Playwright-managed browser in CI; keep the system Chromium
+    # fallback for local Debian installations and allow an explicit override.
+    browser_options = {'headless': True, 'args': ['--no-sandbox']}
+    custom_browser = os.environ.get('PONYGOTCHI_CHROMIUM')
+    if custom_browser:
+        browser_options['executable_path'] = custom_browser
+    elif os.environ.get('CI', '').lower() != 'true' and Path('/usr/bin/chromium').exists():
+        browser_options['executable_path'] = '/usr/bin/chromium'
+    browser = pw.chromium.launch(**browser_options)
     page = browser.new_page(viewport={'width': 760, 'height': 850}, device_scale_factor=1)
     errors=[]
     page.on('pageerror', lambda error: errors.append(str(error)))
