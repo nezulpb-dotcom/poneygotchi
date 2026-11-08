@@ -1,0 +1,8 @@
+{
+  "initialLength": 3,
+  "maxLength": 8,
+  "flashMs": 480,
+  "gapMs": 220,
+  "symbols": 4,
+  "rewardPerRound": 3
+}

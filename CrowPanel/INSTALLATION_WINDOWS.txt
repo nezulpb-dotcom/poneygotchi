@@ -1,0 +1,43 @@
+# CrowPanel DIS05035H V2.2 — Installation
+
+Ce firmware cible le CrowPanel Elecrow 3,5 pouces avec ESP32-WROVER-B,
+écran ILI9488 320 × 480 et tactile résistif. La compilation a été vérifiée
+sur PC. L'affichage, le tactile et la cadence restent à vérifier sur l'appareil.
+
+## Avec Arduino CLI
+
+Depuis le dossier `CrowPanel`, avec Arduino CLI, le cœur ESP32 2.0.17 et
+TFT_eSPI 2.5.43 installés, brancher le CrowPanel et identifier son port avec
+`arduino-cli board list`. Remplacer `COM4` par ce port.
+
+```powershell
+.\compile.ps1
+arduino-cli upload --port COM4 --fqbn esp32:esp32:esp32:PSRAM=enabled --input-dir build
+```
+
+Le dossier `build` contient déjà les binaires de la compilation locale.
+Si Arduino signale un en-tête manquant dans la chaîne ESP32 sous Windows,
+utiliser un dossier court pour le projet et les outils Arduino.
+
+## Avec Arduino IDE
+
+Configurer TFT_eSPI avec `CONFIGURATION_TFT_eSPI.txt`. Ouvrir
+`PonyGotchi_Studio_CrowPanel/PonyGotchi_Studio_CrowPanel.ino`, sélectionner
+**ESP32 Dev Module**, **PSRAM Enabled** et le port du CrowPanel, puis téléverser.
+
+## Ressources microSD
+
+Copier le contenu de `sd_files` à la racine de la microSD, en remplaçant
+les anciens fichiers de même nom. Les nouveaux décors RAW et les bandes des
+soins doivent être installés avec ce firmware. Pour la copie par USB, laisser
+la microSD insérée, fermer le Moniteur série, puis exécuter depuis `CrowPanel` :
+
+```powershell
+python -m pip install pyserial
+python envoyer_tout.py COM4
+```
+
+Attendre les onze confirmations `OK` et redémarrer le CrowPanel. Si le
+tactile demande une calibration, suivre les cibles à l'écran. Toucher le
+décor pour ouvrir les soins, toucher Rosy pour la caresser et utiliser
+**Menu** pour les autres activités. L'heure se règle dans **Réglages**.

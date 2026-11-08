@@ -15,10 +15,10 @@ http.createServer((req, res) => {
   if ((!filename.startsWith(root + path.sep) && filename !== root) || pathname.split('/').some((p) => p.startsWith('.'))) {
     res.writeHead(403).end(); return;
   }
-  const file = filename === root ? path.join(root, 'index.html') : filename;
+  const file = filename === root ? path.join(root, 'studio', 'preview.html') : filename;
   fs.stat(file, (err, stat) => {
     if (err || !stat.isFile()) { res.writeHead(404).end('Not found'); return; }
     res.writeHead(200, { 'Content-Type': mimetypes[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
     fs.createReadStream(file).pipe(res);
   });
-}).listen(port, '127.0.0.1', () => console.log(`PonyGotchi v0.8 : http://127.0.0.1:${port}`));
+}).listen(port, '127.0.0.1', () => console.log(`PonyGotchi Studio : http://127.0.0.1:${port}`));
