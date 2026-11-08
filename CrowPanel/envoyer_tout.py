@@ -1,55 +1,73 @@
-"""Transfert USB vers la microSD du CrowPanel sans lecteur de carte.
-Usage: py -m pip install pyserial && py envoyer_tout.py COM4
-"""
-import sys,time
+"""Send the Studio assets using the standalone or integrated USB receiver."""
+import argparse
 from pathlib import Path
-try:
- import serial
-except ImportError:
- print('Il manque pyserial. Dans PowerShell : py -m pip install pyserial')
- raise SystemExit(2)
-ROOT=Path(__file__).resolve().parent
-SD=ROOT/'sd_files'
-NAMES=['day.raw','dusk.raw','night.raw','rosy.raw',
-       'room_eat.raw','room_play.raw','room_wash.raw','room_sleep.raw','room_pet.raw',
-       'ui_full.raw','ui_care.raw']
-if len(sys.argv)!=2:
- print('Usage: py envoyer_tout.py COM4    (remplacer COM4 par le port Arduino)')
- raise SystemExit(1)
-port=sys.argv[1]
-missing=[f for f in NAMES if not (SD/f).is_file()]
-if missing:raise SystemExit('Fichiers manquants : '+', '.join(missing))
-print('Fermer le Moniteur serie de Arduino IDE et laisser le jeu allume.')
-print('Ne pas toucher au cable pendant le transfert.')
+import time
 
-def expect(ser,expected,seconds=12):
- deadline=time.monotonic()+seconds
- while time.monotonic()<deadline:
-  ans=ser.readline().decode('utf-8','replace').strip()
-  if ans==expected:return
-  if ans.startswith('ERR'):raise RuntimeError('ESP32 : '+ans)
- raise RuntimeError(f'Reponse attendue {expected!r} non recue. Port et firmware a verifier.')
+import serial
 
-try:
- with serial.Serial(port,115200,timeout=0.4,write_timeout=20) as ser:
-  time.sleep(2)
-  for index,name in enumerate(NAMES,1):
-   file=SD/name;size=file.stat().st_size
-   ser.reset_input_buffer()
-   ser.write(b'PING\n');expect(ser,'PONG')
-   ser.write(f'PUT {name} {size}\n'.encode('ascii'));expect(ser,'GO')
-   print(f'[{index}/{len(NAMES)}] {name} — {size:,} octets',flush=True)
-   with file.open('rb') as f:
-    while True:
-     block=f.read(1024)
-     if not block:break
-     ser.write(block)
-   ser.flush()
-   expect(ser,'OK '+name,seconds=30)
-   print('    OK',flush=True)
-   time.sleep(.2)
-except (OSError,RuntimeError,serial.SerialException) as err:
- print('\nTransfert interrompu :',err)
- print('Relancer le script pour recommencer la copie complete.')
- raise SystemExit(1)
-print('\nInstallation des assets terminee ! Appuyer sur RESET du CrowPanel.')
+SD = Path(__file__).resolve().parent / "sd_files"
+SIZES = {
+    **{f"{name}.raw": 320 * 480 * 2 for name in ("day", "dusk", "night")},
+    "rosy.raw": 32 * 144 * 144 * 2,
+    **{f"room_{name}.raw": 3 * 237 * 320 * 2 for name in ("eat", "play", "wash", "sleep", "pet")},
+    "ui_full.raw": 320 * 480 * 2,
+    "ui_care.raw": 320 * 480 * 2,
+}
+
+
+def expect(port, expected, seconds=12):
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        reply = port.readline().decode("utf-8", "replace").strip()
+        if reply == expected:
+            return
+        if reply.startswith("ERR"):
+            raise RuntimeError(f"ESP32 : {reply}")
+    raise TimeoutError(f"Réponse absente : {expected}. Vérifier le port et le récepteur USB.")
+
+
+def transfer(port, files):
+    for index, file in enumerate(files, 1):
+        size = SIZES[file.name]
+        port.write(f"PUT {file.name} {size}\n".encode("ascii"))
+        expect(port, "GO")
+        print(f"[{index}/{len(files)}] {file.name} — {size:,} octets", flush=True)
+        with file.open("rb") as payload:
+            while block := payload.read(256):
+                if port.write(block) != len(block):
+                    raise RuntimeError(f"Écriture série incomplète : {file.name}")
+        port.flush()
+        expect(port, f"OK {file.name}", seconds=30)
+        print(f"    OK {file.name}", flush=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("port")
+    parser.add_argument("--probe", action="store_true", help="Vérifier PING/PONG sans modifier la carte")
+    args = parser.parse_args()
+    try:
+        files = [SD / name for name in SIZES]
+        for file in files:
+            if file.stat().st_size != SIZES[file.name]:
+                raise RuntimeError(f"Taille incorrecte : {file.name}")
+        with serial.Serial(baudrate=115200, timeout=0.4, write_timeout=20) as port:
+            port.port = args.port
+            port.dtr = False
+            port.rts = False
+            port.open()
+            time.sleep(2)
+            port.reset_input_buffer()
+            port.write(b"PING\n")
+            expect(port, "PONG", seconds=5)
+            print("Récepteur USB détecté (PONG).", flush=True)
+            if not args.probe:
+                transfer(port, files)
+    except (OSError, RuntimeError) as error:
+        parser.exit(1, f"Installation interrompue. {error}\n")
+    if not args.probe:
+        print("Les 11 ressources ont été confirmées par le récepteur.")
+
+
+if __name__ == "__main__":
+    main()

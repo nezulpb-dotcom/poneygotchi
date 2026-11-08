@@ -1,43 +1,66 @@
-# CrowPanel DIS05035H V2.2 — Installation
+# Installer PonyGotchi Studio sur le CrowPanel DIS05035H V2.2
 
-Ce firmware cible le CrowPanel Elecrow 3,5 pouces avec ESP32-WROVER-B,
-écran ILI9488 320 × 480 et tactile résistif. La compilation a été vérifiée
-sur PC. L'affichage, le tactile et la cadence restent à vérifier sur l'appareil.
-
-## Avec Arduino CLI
-
-Depuis le dossier `CrowPanel`, avec Arduino CLI, le cœur ESP32 2.0.17 et
-TFT_eSPI 2.5.43 installés, brancher le CrowPanel et identifier son port avec
-`arduino-cli board list`. Remplacer `COM4` par ce port.
+1. Laisser la microSD dans le CrowPanel et brancher le câble USB de données.
+2. Dans Arduino IDE, ouvrir **Outils > Port**. Choisir le port qui disparaît
+   quand le CrowPanel est débranché. Le CH340 du CrowPanel a répondu sur
+   **COM4** lors de la vérification locale.
+3. Fermer le **Moniteur série** et le **Traceur série**. Ouvrir PowerShell dans
+   le dossier `CrowPanel`, puis lancer la commande ci-dessous. Remplacer
+   `COM4` si nécessaire. Sans `-Port`, le script demande de choisir le port.
 
 ```powershell
-.\compile.ps1
-arduino-cli upload --port COM4 --fqbn esp32:esp32:esp32:PSRAM=enabled --input-dir build
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\INSTALLER_PONYGOTCHI.ps1 -Port COM4
 ```
 
-Le dossier `build` contient déjà les binaires de la compilation locale.
-Si Arduino signale un en-tête manquant dans la chaîne ESP32 sous Windows,
-utiliser un dossier court pour le projet et les outils Arduino.
+Le script utilise Python, pyserial et Esptool 4. Le Python et Esptool
+du poste de préparation ont été vérifiés. Sur un autre poste, installer
+`pyserial` avec `python -m pip install pyserial` et le cœur ESP32 2.0.17
+dans le gestionnaire de cartes Arduino si nécessaire.
 
-## Avec Arduino IDE
+## Ce que fait l'installation
 
-Configurer TFT_eSPI avec `CONFIGURATION_TFT_eSPI.txt`. Ouvrir
-`PonyGotchi_Studio_CrowPanel/PonyGotchi_Studio_CrowPanel.ino`, sélectionner
-**ESP32 Dev Module**, **PSRAM Enabled** et le port du CrowPanel, puis téléverser.
+L'installateur vérifie le récepteur série et la disposition flash existante.
+Il envoie ensuite les 11 fichiers de `sd_files` à la racine de la microSD.
+Le jeu définitif est téléversé uniquement après les 11 confirmations.
+Il faut au moins 7 min 26 s pour transmettre 5 138 304 octets à
+115 200 bauds, auxquels s'ajoutent les délais d'écriture et le flash.
+Laisser le câble branché jusqu'au redémarrage final.
 
-## Ressources microSD
+Le script accepte le récepteur USB autonome et celui intégré au jeu. Leur
+protocole commun utilise 115 200 bauds, 8N1, `PING\n` suivi de `PONG`,
+puis `PUT nom octets\n`, `GO`, les octets bruts et `OK nom`. Un `ERR`
+ou une confirmation manquante arrête l'installation. Le protocole confirme
+le nombre d'octets reçus et écrits, sans commande de relecture ou somme de
+contrôle côté carte. En cas d'interruption, relancer le même script pour
+recopier les 11 ressources.
 
-Copier le contenu de `sd_files` à la racine de la microSD, en remplaçant
-les anciens fichiers de même nom. Les nouveaux décors RAW et les bandes des
-soins doivent être installés avec ce firmware. Pour la copie par USB, laisser
-la microSD insérée, fermer le Moniteur série, puis exécuter depuis `CrowPanel` :
+Seuls les fichiers de ressources du jeu sont remplacés sur la microSD.
+Le téléversement écrit uniquement la partition application à `0x10000`.
+Les références de partitions et de démarrage sont utilisées en lecture.
+Le script ne formate pas la microSD et ne touche pas aux sauvegardes,
+à la calibration, à la table de partitions ni au chargeur d'amorçage.
 
-```powershell
-python -m pip install pyserial
-python envoyer_tout.py COM4
-```
+## En cas de blocage
 
-Attendre les onze confirmations `OK` et redémarrer le CrowPanel. Si le
-tactile demande une calibration, suivre les cibles à l'écran. Toucher le
-décor pour ouvrir les soins, toucher Rosy pour la caresser et utiliser
-**Menu** pour les autres activités. L'heure se règle dans **Réglages**.
+- **Accès refusé** — fermer le Moniteur série, le Traceur série et tout autre
+  terminal qui utilise le port, puis relancer.
+- **Pas de PONG** — vérifier le port, redémarrer le CrowPanel et vérifier que
+  le récepteur USB ou un jeu PonyGotchi compatible est déjà installé.
+  Pour tester uniquement la réponse série, ajouter `-Verifier`.
+- **ERR SD / ERR FILE / ERR OPEN** — couper l'alimentation, réinsérer
+  la microSD, puis relancer. L'installateur attend tous les accusés de
+  réception avant de flasher le jeu.
+- **Table de partitions ou sélection de démarrage différente** — le script
+  s'arrête avant la copie pour préserver les données.
+
+## Vérification sur l'écran
+
+Au redémarrage, vérifier que Rosy bouge sur l'accueil. Toucher le décor pour
+ouvrir les jauges, puis essayer Manger, Jouer, Laver et Dormir. Toucher Rosy
+pour la caresser. Dans **Menu > Réglages**, sélectionner Jour, Soir et Nuit
+pour vérifier les trois fonds, puis remettre Auto. Sur chaque soin, observer
+les accessoires au sol et le déplacement de Rosy. Si le tactile demande une
+calibration, toucher les cibles affichées.
+
+Pour reconstruire le firmware ultérieurement, utiliser `compile.ps1`.
+L'installateur utilise la version compilée incluse dans `installation-binaries`.
