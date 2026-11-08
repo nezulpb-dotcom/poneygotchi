@@ -1,66 +1,73 @@
-# Installer PonyGotchi Studio sur le CrowPanel DIS05035H V2.2
+# Reprendre l’installation du CrowPanel DIS05035H V2.2
 
-1. Laisser la microSD dans le CrowPanel et brancher le câble USB de données.
-2. Dans Arduino IDE, ouvrir **Outils > Port**. Choisir le port qui disparaît
-   quand le CrowPanel est débranché. Le CH340 du CrowPanel a répondu sur
-   **COM4** lors de la vérification locale.
-3. Fermer le **Moniteur série** et le **Traceur série**. Ouvrir PowerShell dans
-   le dossier `CrowPanel`, puis lancer la commande ci-dessous. Remplacer
-   `COM4` si nécessaire. Sans `-Port`, le script demande de choisir le port.
+Laisser la microSD dans l’appareil. Dans Arduino IDE, vérifier **Outils >
+Port > COM4** et fermer le Moniteur série et le Traceur série. Ouvrir
+PowerShell dans ce dossier et lancer :
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\INSTALLER_PONYGOTCHI.ps1 -Port COM4
 ```
 
-Le script utilise Python, pyserial et Esptool 4. Le Python et Esptool
-du poste de préparation ont été vérifiés. Sur un autre poste, installer
-`pyserial` avec `python -m pip install pyserial` et le cœur ESP32 2.0.17
-dans le gestionnaire de cartes Arduino si nécessaire.
+Si le port a changé, remplacer `COM4`. Sans `-Port`, le script demande
+de choisir le port. Il utilise Python, pyserial et Esptool 4. Sur un autre
+poste, installer au besoin pyserial avec `python -m pip install pyserial`
+et le cœur ESP32 2.0.17 dans le gestionnaire de cartes Arduino.
 
-## Ce que fait l'installation
+## Déroulement
 
-L'installateur vérifie le récepteur série et la disposition flash existante.
-Il envoie ensuite les 11 fichiers de `sd_files` à la racine de la microSD.
-Le jeu définitif est téléversé uniquement après les 11 confirmations.
-Il faut au moins 7 min 26 s pour transmettre 5 138 304 octets à
-115 200 bauds, auxquels s'ajoutent les délais d'écriture et le flash.
-Laisser le câble branché jusqu'au redémarrage final.
+1. Le script vérifie la disposition flash existante. S’il trouve l’ancien
+   récepteur, il installe le récepteur temporaire USB v2 dans la partition
+   application. L’écran peut rester noir pendant cette étape.
+2. Il relit les ressources déjà présentes sur la microSD. Une ressource
+   dont la taille et le CRC32 correspondent est conservée. Les autres
+   sont copiées en blocs de 512 octets avec contrôle CRC32 et accusé de
+   réception. Une erreur de bloc ou un accusé perdu entraîne une nouvelle
+   tentative, avec trois essais maximum. Si nécessaire, le fichier seul
+   est repris depuis le début, avec trois essais maximum.
+3. Le récepteur relit chaque copie temporaire avant de remplacer le fichier
+   précédent. Le PC demande ensuite une dernière relecture des 11 fichiers.
+   Le firmware définitif n’est téléversé que si tous correspondent. Le script
+   affiche sa confirmation finale après le succès d’Esptool.
 
-Le script accepte le récepteur USB autonome et celui intégré au jeu. Leur
-protocole commun utilise 115 200 bauds, 8N1, `PING\n` suivi de `PONG`,
-puis `PUT nom octets\n`, `GO`, les octets bruts et `OK nom`. Un `ERR`
-ou une confirmation manquante arrête l'installation. Le protocole confirme
-le nombre d'octets reçus et écrits, sans commande de relecture ou somme de
-contrôle côté carte. En cas d'interruption, relancer le même script pour
-recopier les 11 ressources.
+La copie intégrale peut prendre 15 à 20 minutes. Laisser le câble branché
+jusqu’au redémarrage. Si la copie s’interrompt, relancer la même commande.
+Le récepteur temporaire peut rester installé après un échec. La relance le
+détecte et conserve les fichiers déjà validés.
 
-Seuls les fichiers de ressources du jeu sont remplacés sur la microSD.
-Le téléversement écrit uniquement la partition application à `0x10000`.
-Les références de partitions et de démarrage sont utilisées en lecture.
-Le script ne formate pas la microSD et ne touche pas aux sauvegardes,
-à la calibration, à la table de partitions ni au chargeur d'amorçage.
+Les deux téléversements écrivent uniquement la partition application
+à `0x10000`. Les sauvegardes, la calibration, la table de partitions, le
+chargeur d’amorçage et les autres fichiers de la microSD sont préservés.
 
-## En cas de blocage
+## Diagnostic
 
-- **Accès refusé** — fermer le Moniteur série, le Traceur série et tout autre
-  terminal qui utilise le port, puis relancer.
-- **Pas de PONG** — vérifier le port, redémarrer le CrowPanel et vérifier que
-  le récepteur USB ou un jeu PonyGotchi compatible est déjà installé.
-  Pour tester uniquement la réponse série, ajouter `-Verifier`.
-- **ERR SD / ERR FILE / ERR OPEN** — couper l'alimentation, réinsérer
-  la microSD, puis relancer. L'installateur attend tous les accusés de
-  réception avant de flasher le jeu.
-- **Table de partitions ou sélection de démarrage différente** — le script
-  s'arrête avant la copie pour préserver les données.
+- **Accès refusé** — fermer le Moniteur série, le Traceur série et les
+  autres programmes qui utilisent le port. Vérifier le câble et relancer.
+- **Pas de réponse à PING** — vérifier le port et redémarrer le CrowPanel.
+  Ajouter `-Verifier` pour détecter le récepteur sans rien téléverser.
+- **SD_MOUNT / SD_OPEN / SD_WRITE / SD_READ** — le message indique l’étape,
+  le fichier et, pour une écriture, l’octet concerné. Si les tentatives
+  échouent, couper l’alimentation et réinsérer la microSD avant de relancer.
+- **FILE_VERIFY / FINAL_VERIFY** — la taille ou le CRC32 relu diffère.
+  Le jeu n’est pas téléversé.
+- **Table de partitions ou sélection de démarrage différente** — le
+  script s’arrête avant tout téléversement.
 
-## Vérification sur l'écran
+## Vérification sur l’écran
 
-Au redémarrage, vérifier que Rosy bouge sur l'accueil. Toucher le décor pour
-ouvrir les jauges, puis essayer Manger, Jouer, Laver et Dormir. Toucher Rosy
-pour la caresser. Dans **Menu > Réglages**, sélectionner Jour, Soir et Nuit
-pour vérifier les trois fonds, puis remettre Auto. Sur chaque soin, observer
-les accessoires au sol et le déplacement de Rosy. Si le tactile demande une
-calibration, toucher les cibles affichées.
+Au redémarrage, toucher le décor pour afficher les jauges. Essayer les
+quatre soins et toucher Rosy pour la caresser. Dans **Menu > Réglages**,
+sélectionner Jour, Soir et Nuit, puis remettre Auto. Observer le tactile,
+la visibilité des accessoires et la fluidité pendant les transitions.
 
-Pour reconstruire le firmware ultérieurement, utiliser `compile.ps1`.
-L'installateur utilise la version compilée incluse dans `installation-binaries`.
+## Protocole USB v2
+
+115 200 bauds, 8N1. `PING` / `PONG` détecte la liaison et `HELLO` /
+`PONYUSB 2` identifie le nouveau récepteur. Chaque commande se termine
+par un saut de ligne. `STAT nom` lit la taille et le CRC32 sur la microSD.
+`BEGIN nom taille crc32` ouvre une copie temporaire. Chaque
+`DATA offset longueur crc32 hex` reçoit `ACK offset-suivant` ou une
+erreur détaillée. Le dernier bloc accepté est idempotent. `END` déclenche
+la relecture et le remplacement. `ABORT` abandonne la copie temporaire.
+
+Le code du récepteur est dans `PonyGotchi_USB_Reliable`. Le jeu et le
+récepteur compilés se trouvent dans `installation-binaries`.

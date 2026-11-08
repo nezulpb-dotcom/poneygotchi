@@ -32,14 +32,18 @@ try {
     $Port = $Port.Trim().ToUpperInvariant()
     if ($ports -notcontains $Port) { throw "Le port $Port est introuvable." }
 
-    Invoke-Checked "python" @("envoyer_tout.py", $Port, "--probe")
+    & python envoyer_tout.py $Port --probe
+    $probe = $LASTEXITCODE
+    if ($probe -ne 0 -and $probe -ne 3) { throw "Le récepteur USB ne répond pas correctement." }
     if ($Verifier) { return }
 
     $release = Join-Path $PSScriptRoot "installation-binaries"
     $app = Join-Path $release "PonyGotchi_Studio_CrowPanel.ino.bin"
+    $receiver = Join-Path $release "PonyGotchi_USB_Reliable.ino.bin"
     $table = Join-Path $release "PonyGotchi_Studio_CrowPanel.ino.partitions.bin"
     $ota = Join-Path $release "reference-otadata.bin"
     $checksums = @{
+        $receiver = "23701ACF6A52066C010C75EFDA0E5158D24D7DA2BE06C1990545F7883223A289"
         $app = "B7139A41422F736951CB70418EA25E31F28BAFA9FE96C1A5E61842256AFCB201"
         $table = "148B959CBFF1C38AA8E1D5C0BA9D612C54997B945E56A63F41223EEF650653A1"
         $ota = "F94C5D786A7A8FAB06AC5D10E33BF37711A6697636DC037559EA19CC410A17F0"
@@ -81,11 +85,16 @@ try {
         Remove-Item -LiteralPath $readback -ErrorAction SilentlyContinue
     }
 
-    Write-Host "Copie des 11 fichiers vers la microSD. Compter plusieurs minutes."
+    if ($probe -eq 3) {
+        Write-Host "Installation du récepteur temporaire avec contrôle d'intégrité…"
+        Invoke-Checked $Esptool ($base + @("write_flash", "0x10000", $receiver))
+        Start-Sleep -Seconds 2
+    }
+    Write-Host "Vérification et copie des 11 fichiers sur la microSD."
     Invoke-Checked "python" @("envoyer_tout.py", $Port)
     Write-Host "Téléversement du jeu dans la partition application…"
     Invoke-Checked $Esptool ($base + @("write_flash", "0x10000", $app))
-    Write-Host "Installation terminée. Le CrowPanel redémarre sur PonyGotchi Studio."
+    Write-Host "11 fichiers vérifiés et flash du jeu confirmé. Le CrowPanel redémarre."
 } catch {
     Write-Host $_.Exception.Message -ForegroundColor Red
     exit 1
