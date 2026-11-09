@@ -19,6 +19,7 @@
 #include "heure_manuelle.h"
 #include "fireflies_rules.h"
 #include "exploration_rules.h"
+#include "care_layout.h"
 
 constexpr int W=320,H=480,PW=144,PH=144,ROOM_TOP=192,ROOM_END=429;
 constexpr uint16_t KEY=0xF81F;
@@ -346,23 +347,41 @@ void headerTitle(const String& heading,const String& sub=""){
  pill(269,97,34,31,"X");
 }
 void drawCare(){
- tft.fillRoundRect(8,130,304,52,12,lightInk);
- tft.drawRoundRect(8,130,304,52,12,lineInk);
- const char* needs[]={"Faim","Joie","Bain","Repos"};
- int values[]={hungry,joy,clean,energy};
- for(int i=0;i<4;i++){
-  int x=16+i*57;
-  centered(needs[i],x+25,142,1,bgInk);
-  bar(x,151,50,values[i],accentInk);
-  centered(String(values[i])+"%",x+25,171,1,bgInk);
- }
+ // Keep Rosy's full 144-pixel animation unobstructed (y=185..329).
+ // A compact header holds the menu button; four large gauges appear BELOW
+ // Rosy and ABOVE the existing 73 x 47 px care action buttons.
+ tft.fillRoundRect(CareLayout::headerLeft,CareLayout::headerTop,
+                   CareLayout::headerWidth,CareLayout::headerHeight,12,lightInk);
+ tft.drawRoundRect(CareLayout::headerLeft,CareLayout::headerTop,
+                   CareLayout::headerWidth,CareLayout::headerHeight,12,lineInk);
+ centered("Besoins de Rosy",115,147,2,bgInk);
+ centered("Touchez Rosy pour un calin",115,170,1,accentInk);
  pill(245,134,60,44,"Menu");
+
+ tft.fillRoundRect(CareLayout::statsLeft,CareLayout::statsTop,
+                   CareLayout::statsWidth,CareLayout::statsHeight,12,lightInk);
+ tft.drawRoundRect(CareLayout::statsLeft,CareLayout::statsTop,
+                   CareLayout::statsWidth,CareLayout::statsHeight,12,lineInk);
+ const char* needs[]={"Faim","Joie","Proprete","Energie"};
+ const int values[]={hungry,joy,clean,energy};
+ const uint16_t colors[]={goldInk,pinkInk,greenInk,accentInk};
  for(int i=0;i<4;i++){
-  const int x=8+i*77;
-  tft.fillRoundRect(x,CARE_TOP,73,47,9,lightInk);
-  tft.drawRoundRect(x,CARE_TOP,73,47,9,lineInk);
-  centered(goodNames[i],x+36,CARE_TOP+15,2,bgInk);
-  bar(x+7,CARE_TOP+30,59,values[i],accentInk);
+  const int x=CareLayout::tileX(i),y=CareLayout::tileY(i);
+  tft.fillRoundRect(x,y,CareLayout::tileWidth,CareLayout::tileHeight,8,cc(255,252,247));
+  tft.drawRoundRect(x,y,CareLayout::tileWidth,CareLayout::tileHeight,8,lineInk);
+  label(needs[i],x+8,y+3,2,bgInk);
+  centered(String(values[i])+"%",x+CareLayout::tileWidth-29,y+12,2,accentInk);
+  bar(x+8,y+23,CareLayout::gaugeWidth,values[i],colors[i]);
+ }
+ // Unchanged action hit targets: physical fingertip-sized 73 x 47 px.
+ for(int i=0;i<CareLayout::actionCount;i++){
+  const int x=CareLayout::actionsLeft+i*CareLayout::actionPitch;
+  tft.fillRoundRect(x,CareLayout::actionsTop,CareLayout::actionWidth,
+                    CareLayout::actionHeight,9,lightInk);
+  tft.drawRoundRect(x,CareLayout::actionsTop,CareLayout::actionWidth,
+                    CareLayout::actionHeight,9,lineInk);
+  centered(goodNames[i],x+36,CareLayout::actionsTop+15,2,bgInk);
+  bar(x+7,CareLayout::actionsTop+30,59,values[i],accentInk);
  }
 }
 void drawHandle(){
@@ -375,7 +394,8 @@ void toggleCare(bool visible){
   drawCare();
  }else{
   page=HOME;
-  drawStageRows(130,182);
+  drawStageRows(CareLayout::headerTop,CareLayout::headerTop+CareLayout::headerHeight);
+  drawStageRows(CareLayout::statsTop,CareLayout::statsTop+CareLayout::statsHeight);
   drawStageRows(CARE_TOP,H);
   drawHandle();
  }
@@ -748,10 +768,10 @@ void touch(int x,int y){
   if(page==HOME){toggleCare(true);return;}
   careTouchedAt=millis();
   if(x>=245&&x<305&&y>=134&&y<178){go(MENU);return;}
-  if(y>=CARE_TOP&&y<CARE_TOP+47&&x>=8){
-   int i=(x-8)/77;
-   if(i<4&&(x-8)%77<73)doAction(i);
-  }else if(y<130||(y>=182&&y<CARE_TOP))toggleCare(false);
+  const int careAction=CareLayout::careActionAt(x,y);
+  if(careAction>=0)doAction(careAction);
+  else if(y<130||(y>=182&&y<CARE_TOP&&!CareLayout::inStats(x,y)))
+   toggleCare(false);
   return;
  }
  if((y>=15&&y<59&&x>=14&&x<136)||(y>=90&&y<137&&x>268)){go(HOME);return;}
