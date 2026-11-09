@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = path.resolve(import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname), "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const header = fs.readFileSync(path.join(root, "CrowPanel/PonyGotchi_Studio_CrowPanel/care_layout.h"), "utf8");
 const firmware = fs.readFileSync(path.join(root, "CrowPanel/PonyGotchi_Studio_CrowPanel/PonyGotchi_Studio_CrowPanel.ino"), "utf8");
 function constant(name) {
