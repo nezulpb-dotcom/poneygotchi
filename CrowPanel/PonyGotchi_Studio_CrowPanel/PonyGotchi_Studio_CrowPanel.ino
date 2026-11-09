@@ -212,40 +212,87 @@ void drawEffectOnComp(int px,int py,int cw,int ch){
  else if(actionId==3){for(int i=0;i<3;i++){int x=cx+i*8,y=cy-i*17-(int)((elapsed/200)%10);circle(x,y,2+i,cc(250,235,218));}}
  else if(actionId==4){circle(cx-8,cy-30,5,pinkInk);circle(cx+1,cy-30,5,pinkInk);}
 }
+// A missing large frame buffer must not freeze the character. When both
+// PSRAM and internal allocations fail, render short strips without clearing LCD.
+void reportAnimError(const char* reason){
+ static uint32_t last=0;
+ const uint32_t now=millis();
+ if(now-last<1500)return;
+ last=now;
+ Serial.printf("[ANIM ERR] %s heap=%u psram=%u\n",reason,
+               (unsigned)ESP.getFreeHeap(),
+               (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+}
 bool drawPonyComposited(int oldX,int newX,int y,int state,int frame,bool fullBand){
- if(!comp)return false;
- int left=max(0,min(oldX,newX)),right=min(W,max(oldX,newX)+PW+8);
- if(fullBand){left=0;right=W;}
- int top=max(0,y),bottom=min(H,y+PH), cw=right-left,ch=bottom-top;
- if(cw<=0||cw>compWidth||ch<=0||ch>PH)return false;
- uint32_t offset=((uint32_t)state*4+(frame%4))*sizeof(sprite);
+ const int left=fullBand?0:max(0,min(oldX,newX));
+ const int right=fullBand?W:min(W,max(oldX,newX)+PW+8);
+ const int top=max(0,y),bottom=min(H,y+PH);
+ const int cw=right-left,ch=bottom-top;
+ if(state<0||state>=8||frame<0||frame>=4){reportAnimError("bad sprite state/frame");return false;}
+ if(cw<=0||cw>W||ch<=0||ch>PH||(comp&&cw>compWidth)){
+  reportAnimError("bad compositor region");return false;
+ }
+ const uint32_t offset=((uint32_t)state*4+(uint32_t)frame)*sizeof(sprite);
  const uint16_t* pixels=sprite;
  if(rosyCache){
   pixels=rosyCache+offset/sizeof(uint16_t);
  }else{
   File sf=SD.open("/rosy.raw",FILE_READ);
-  if(!sf)return false;
-  bool ok=sf.seek(offset)&&sf.read((uint8_t*)sprite,sizeof(sprite))==sizeof(sprite);
+  if(!sf){reportAnimError("rosy.raw missing");return false;}
+  if(sf.size()!=rosyBytes){sf.close();reportAnimError("rosy.raw has wrong length");return false;}
+  const bool ok=sf.seek(offset)&&sf.read((uint8_t*)sprite,sizeof(sprite))==sizeof(sprite);
   sf.close();
-  if(!ok)return false;
+  if(!ok){reportAnimError("rosy.raw read failed");return false;}
  }
- if(bgCache){for(int row=0;row<ch;row++)memcpy(comp+row*cw,bgCache+(top+row)*W+left,cw*2);}
- else{
-  File bg=SD.open(backgroundPath(),FILE_READ);if(!bg)return false;
-  for(int row=0;row<ch;row++){
-   if(!bg.seek(((uint32_t)(top+row)*W+left)*2)||bg.read((uint8_t*)(comp+row*cw),cw*2)!=cw*2){bg.close();return false;}
-  }bg.close();
-  File room=openRoom();
-  for(int row=0;room&&row<ch;row++){
-   if(readRoom(room,left,top+row,cw,rowbuf))memcpy(comp+row*cw,rowbuf,cw*2);
+ // W x 8 x RGB565, 5120 bytes. Used only when the normal buffer is unavailable.
+ static uint16_t stripe[W*8];
+ const int bandSize=comp?PH:8;
+ File bg,room;
+ if(!bgCache){
+  bg=SD.open(backgroundPath(),FILE_READ);
+  if(!bg){reportAnimError("background missing");return false;}
+  room=openRoom();
+ }
+ for(int bandTop=top;bandTop<bottom;bandTop+=bandSize){
+  const int rows=min(bandSize,bottom-bandTop);
+  uint16_t* target=comp?comp:stripe;
+  for(int row=0;row<rows;row++){
+   const int screenY=bandTop+row;
+   uint16_t* dest=target+row*cw;
+   if(bgCache){
+    memcpy(dest,bgCache+(uint32_t)screenY*W+left,cw*2);
+   }else{
+    const uint32_t position=((uint32_t)screenY*W+left)*2;
+    if(!bg.seek(position)||bg.read((uint8_t*)dest,cw*2)!=cw*2){
+     bg.close();if(room)room.close();
+     reportAnimError("background strip read failed");
+     return false;
+    }
+    if(readRoom(room,left,screenY,cw,patchbuf))memcpy(dest,patchbuf,cw*2);
+   }
   }
+  for(int row=0;row<rows;row++){
+   const int spriteY=bandTop+row-y;
+   if(spriteY<0||spriteY>=PH)continue;
+   const uint16_t* line=pixels+(uint32_t)spriteY*PW;
+   uint16_t* dest=target+row*cw;
+   for(int sx=0;sx<PW;sx++){
+    const int dx=newX+sx-left;
+    if(dx>=0&&dx<cw&&line[sx]!=KEY)dest[dx]=line[sx];
+   }
+  }
+  // Draw optional equipment and action particles in the current strip.
+  uint16_t* prior=comp;
+  comp=target;
+  drawAccessoryOnComp(left,bandTop,cw,rows,0,0);
+  drawEffectOnComp(left,bandTop,cw,rows);
+  comp=prior;
+  tft.setSwapBytes(true);
+  tft.pushImage(left,bandTop,cw,rows,target);
  }
- for(int sy=0;sy<ch;sy++)for(int sx=0;sx<PW;sx++){
-  int dx=newX+sx-left;if(dx>=0&&dx<cw){uint16_t pix=pixels[sy*PW+sx];if(pix!=KEY)comp[sy*cw+dx]=pix;}
- }
- drawAccessoryOnComp(left,top,cw,ch,0,0);
- drawEffectOnComp(left,top,cw,ch);
- tft.setSwapBytes(true);tft.pushImage(left,top,cw,ch,comp);return true;
+ if(bg)bg.close();
+ if(room)room.close();
+ return true;
 }
 void centered(const String& s,int x,int y,int font=2,uint16_t color=0,bool darkBg=false){
  tft.setTextDatum(MC_DATUM);tft.setTextColor(color);tft.drawString(s,x,y,font);
@@ -822,13 +869,17 @@ void setup(){
  if(comp)compWidth=W;
  if(!comp)comp=(uint16_t*)malloc((size_t)COM_W*PH*2);
  arcadeBuffer=(uint16_t*)ps_malloc((size_t)264*212*2);
- Serial.print("PSRAM background: ");Serial.println(bgCache?"YES":"NO");
+ Serial.printf("[ANIM INIT] background=%s composer=%s width=%d freePSRAM=%u\n",
+               bgCache?"YES":"NO",comp?"YES":"STRIP",compWidth,
+               (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
  sdBus.begin(SD_SCK,SD_MISO,SD_MOSI,SD_CS);sdReady=SD.begin(SD_CS,sdBus,4000000);
  if(!sdReady){tft.drawString("microSD introuvable",160,280,2);Serial.println("ERROR SD");return;}
  if(prefs.getBytesLength("touch")==sizeof(calibration)){
   prefs.getBytes("touch",calibration,sizeof(calibration));tft.setTouch(calibration);
  }else calibrate();
  cacheRosy();
+ Serial.printf("[ANIM INIT] rosyCache=%s bytes=%u frames=32 frameBytes=%u\n",
+               rosyCache?"PSRAM":"SD",(unsigned)rosyBytes,(unsigned)sizeof(sprite));
  randomSeed((uint32_t)esp_random());world=worldNow();drawCurrent();
  lastTick=lastFrame=lastSave=lastMinuteCheck=millis();
  Serial.println("PonyGotchi Studio READY");
@@ -871,7 +922,7 @@ void loop(){
  }
  if(now-lastSave>120000)persist();
  if(page==CARE&&now-careTouchedAt>=12000)toggleCare(false);
- if((page==HOME||page==CARE||page==MENU)&&now-lastFrame>=175&&comp){
+ if((page==HOME||page==CARE||page==MENU)&&now-lastFrame>=175){
   lastFrame=now;petFrame=(petFrame+1)%4;
   if(actionId>=0)petState=sprForAction[actionId];
   else if(hungry<20||joy<20)petState=6;
@@ -880,10 +931,15 @@ void loop(){
   else petState=0;
   // Gentle autonomous walk, while preserving at most 18-pixel dirty union.
   if(actionId<0&&petState==1){petX+=((now/5200)%2==0)?2:-2;petX=constrain(petX,48,126);}
-  if(!drawPonyComposited(lastPetX,petX,petY,petState,petFrame,false)){
-   static bool reported=false;
-   if(!reported){Serial.println("ERROR ROSY");reported=true;}
-  }else lastPetX=petX;
+  bool frameOk=drawPonyComposited(lastPetX,petX,petY,petState,petFrame,false);
+  if(frameOk)lastPetX=petX;
+  static uint32_t lastAnimDiagnostic=0;
+  if(now-lastAnimDiagnostic>=1000){
+   lastAnimDiagnostic=now;
+   Serial.printf("[ANIM] page=%d state=%d frame=%d/4 x=%d y=%d ok=%d comp=%s rosy=%s\n",
+                 page,petState,petFrame,petX,petY,frameOk?1:0,
+                 comp?"RAM":"STRIP",rosyCache?"PSRAM":"SD");
+  }
  }
  delay(8);
 }
