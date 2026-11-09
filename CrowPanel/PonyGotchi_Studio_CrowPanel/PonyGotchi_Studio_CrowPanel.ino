@@ -18,6 +18,7 @@
 #include <esp_heap_caps.h>
 #include "heure_manuelle.h"
 #include "fireflies_rules.h"
+#include "exploration_rules.h"
 
 constexpr int W=320,H=480,PW=144,PH=144,ROOM_TOP=192,ROOM_END=429;
 constexpr uint16_t KEY=0xF81F;
@@ -56,6 +57,9 @@ int page=HOME, world=0, worldOverride=0, actionId=-1, petFrame=0, petState=0;
 int hungry=82,joy=84,clean=86,energy=83,xp=0,stars=35,level=1,bond=0;
 int petX=90,petY=265,lastPetX=90,lastPetY=265;
 int owned=1, equipped=0, visits=0, discoveries=0;
+int lastExploreIndex=-1;
+bool lastExploreNew=false;
+uint32_t exploreToastUntil=0;
 int quests[4]={0,0,0,0};
 int savedDay=0, brightness=255, arcadeScore=0, targetX=140,targetY=300;
 uint8_t lanternSequence[Fireflies::maxLength];
@@ -100,7 +104,7 @@ void loadSave(){
  xp=max(0,prefs.getInt("xp",0));stars=max(0,prefs.getInt("stars",prefs.getInt("star",35)));
  level=max(1,prefs.getInt("level",1));bond=max(0,prefs.getInt("bond",0));
  owned=prefs.getInt("owned",1)|1; equipped=constrain(prefs.getInt("wear",0),0,shopCount-1);
- visits=max(0,prefs.getInt("visits",0));discoveries=prefs.getInt("finds",0);
+ visits=max(0,prefs.getInt("visits",0));discoveries=prefs.getInt("finds",0)&Exploration::fullCollection;
  savedDay=prefs.getInt("day",0);brightness=constrain(prefs.getInt("bright",255),45,255);
  worldOverride=constrain(prefs.getInt("world",0),0,3);softMode=prefs.getBool("soft",true);
  for(int i=0;i<4;i++){char key[10];snprintf(key,sizeof(key),"q%d",i);quests[i]=max(0,prefs.getInt(key,0));}
@@ -416,8 +420,11 @@ void drawExplore(){
   tft.drawRoundRect(x,y,131,37,9,lineInk);
   centered(found?treasureNames[i]:"...",x+65,y+18,2,bgInk);
  }
+ if(lastExploreIndex>=0)
+  centered(String(lastExploreNew?"Trouve : ":"Retrouve : ")+treasureNames[lastExploreIndex],160,386,2,accentInk);
+ else centered("Chaque balade revele un souvenir",160,386,2,accentInk);
  pill(62,404,196,44,"Partir explorer");
- centered("Une balade rapporte 8 etoiles",160,458,2,accentInk);
+ centered("Nouveau : +10 etoiles   Deja vu : +3",160,458,1,accentInk);
 }
 void drawSettings(){
  headerTitle("Parametres","100 % hors ligne");
@@ -560,6 +567,15 @@ void drawLanterns(bool first){
  }
  if(lanternDone)pill(84,363,152,35,"Rejouer");
 }
+void drawExploreToast(){
+ if(page!=HOME||lastExploreIndex<0||!exploreToastUntil||
+    (int32_t)(millis()-exploreToastUntil)>=0)return;
+ tft.fillRoundRect(22,366,276,49,12,lightInk);
+ tft.drawRoundRect(22,366,276,49,12,lineInk);
+ centered(lastExploreNew?"Nouveau souvenir !":"Souvenir retrouve",160,380,2,bgInk);
+ centered(String(treasureNames[lastExploreIndex])+
+          String(lastExploreNew?"  +10 *":"  +3 *"),160,400,2,accentInk);
+}
 void drawCurrent(){
  if(!sdReady){tft.fillScreen(TFT_NAVY);return;}
  world=actionId==3&&millis()<actionUntil?2:worldNow();
@@ -583,6 +599,7 @@ void drawCurrent(){
  if(page==CARE)drawCare();else if(page==MENU)drawMenu();else if(page==QUEST)drawQuest();else if(page==SHOP)drawShop();
  else if(page==EXPLORE)drawExplore();else if(page==SETTINGS)drawSettings();
  else if(page==GAMES)drawGames();else if(page==MEMORY)drawMemory();else if(page==GARDEN)drawGarden();else if(page==LANTERNS)drawLanterns(true);else if(page==ARCADE)drawArcade(true);else if(page==7)drawTimeEditor();
+ drawExploreToast();
  lastPetX=petX;lastPetY=petY;
 }
 void go(int p){page=p;if(page==CARE)careTouchedAt=millis();if(actionId<0){petState=0;petFrame=0;}drawCurrent();}
@@ -603,9 +620,24 @@ void buy(int i){if(i<0||i>=shopCount)return;
  if(!(owned&(1<<i))){if(stars<shopCosts[i])return;stars-=shopCosts[i];owned|=1<<i;}
  equipped=i;persist(false);go(CARE);
 }
-void startExplore(){page=HOME;actionId=4;actionUntil=millis()+4800;actionStart=millis();
- petState=3;exploreUntil=millis()+4800;drawCurrent();}
-void endExplore(){if(!exploreUntil)return;exploreUntil=0;visits++;discoveries|=1<<((visits-1)%8);award(15,8);}
+void startExplore(){
+ page=HOME;
+ exploreToastUntil=0;
+ actionId=4;actionUntil=millis()+4800;actionStart=millis();
+ petState=3;exploreUntil=millis()+4800;drawCurrent();
+}
+void endExplore(){
+ if(!exploreUntil)return;
+ exploreUntil=0;
+ const Exploration::Discovery found=Exploration::discover(
+    (uint8_t)discoveries,(uint32_t)random(0x7fffffff));
+ visits++;
+ discoveries|=(1<<found.index);
+ lastExploreIndex=found.index;
+ lastExploreNew=found.isNew;
+ exploreToastUntil=millis()+4000;
+ award(found.xp,found.stars);
+}
 void startArcade(){arcadeScore=0;arcadeUntil=millis()+15000;targetX=60+random(200);targetY=239+random(145);go(ARCADE);}
 void setTimePart(int part,int delta){
  struct tm d={};if(!getLocalTime(&d,15))return;
@@ -921,6 +953,10 @@ void loop(){
    if(page==CARE)drawCare();
  }
  if(now-lastSave>120000)persist();
+ if(exploreToastUntil&&(int32_t)(now-exploreToastUntil)>=0){
+  exploreToastUntil=0;
+  if(page==HOME)drawStageRows(366,416);
+ }
  if(page==CARE&&now-careTouchedAt>=12000)toggleCare(false);
  if((page==HOME||page==CARE||page==MENU)&&now-lastFrame>=175){
   lastFrame=now;petFrame=(petFrame+1)%4;
