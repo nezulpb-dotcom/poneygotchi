@@ -63,6 +63,53 @@ function drawPanel(preserveScroll = false) {
   $('sheetWrap').querySelector('.bottom-sheet').scrollTop = scroll;
   for (const button of document.querySelectorAll('[data-tab]')) button.classList.toggle('active', button.dataset.tab === panelTab);
 }
+async function captureMemory() {
+  const loadImage = (src) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+  const backgroundUrl = getComputedStyle($('landscape')).backgroundImage.slice(4, -1).replace(/^['"]|['"]$/g, '');
+  const background = await loadImage(backgroundUrl);
+  const ponyImage = await loadImage($('ponySprite').src);
+  const canvas = document.createElement('canvas');
+  canvas.width = 320;
+  canvas.height = 480;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas indisponible');
+  context.drawImage(background, 0, 0, 320, 480);
+  const pony = $('ponyWrap');
+  context.drawImage(ponyImage, pony.offsetLeft, pony.offsetTop, 144, 144);
+  const accessory = $('ponyAccessory').textContent;
+  if (accessory) { context.font = '22px serif'; context.fillText(accessory, pony.offsetLeft + 112, pony.offsetTop + 24); }
+  if (game.settings.meadowWeather === 'drizzle') {
+    context.strokeStyle = 'rgba(231, 239, 255, .62)';
+    for (let i = 0; i < 22; i++) {
+      const x = (i * 47 + 13) % 320, y = (i * 83 + 29) % 470;
+      context.beginPath(); context.moveTo(x, y); context.lineTo(x + 2, y + 8); context.stroke();
+    }
+  }
+  const date = new Date();
+  context.fillStyle = '#342845a8';
+  context.fillRect(18, 18, 170, 58);
+  context.fillStyle = '#fffaf2';
+  context.font = '13px Georgia, serif';
+  context.fillText(date.toLocaleDateString('fr-BE', { weekday: 'short', day: 'numeric', month: 'short' }), 29, 39);
+  context.font = '24px Georgia, serif';
+  context.fillText(date.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' }), 28, 65);
+  return canvas.toDataURL('image/jpeg', 0.68);
+}
+function memoryCaption(scene, weather) {
+  const stories = weather === 'drizzle'
+    ? ['Une goutte chatouille le nez de Rosy.', 'La pluie joue une petite mélodie sur les feuilles.', 'Rosy découvre un arc-en-ciel dans une flaque.']
+    : scene === 'night'
+      ? ['Rosy confie un secret aux étoiles.', 'Une luciole lui souhaite bonne nuit.', 'La lune veille sur le rêve de Rosy.']
+      : scene === 'dusk'
+        ? ['Le ciel rose accompagne le dernier pas de Rosy.', 'Rosy regarde le soleil se coucher doucement.', 'Un papillon rentre chez lui avec Rosy.']
+        : ['Rosy a trouvé une fleur qui sent le miel.', 'Un papillon danse autour de Rosy.', 'Rosy écoute le vent dans les hautes herbes.'];
+  return stories[Math.floor(Math.random() * stories.length)];
+}
 function setAccessory() {
   const item = ITEMS.find((i) => i.id === game.equipped);
   $('ponyAccessory').textContent = item?.id === 'none' ? '' : item?.symbol || '';
@@ -105,6 +152,7 @@ function updateTime() {
     $('screen').dataset.scene = scene;
     $('landscape').style.backgroundImage = `url('./assets/backgrounds/meadow_${scene}.png')`;
   }
+  $('screen').dataset.weather = game.settings.meadowWeather;
   maybeReminder(date);
 }
 function maybeReminder(now) {
@@ -157,9 +205,27 @@ for (const button of document.querySelectorAll('[data-tab]')) button.addEventLis
   panelTab = button.dataset.tab;
   drawPanel();
 });
-$('sheetContent').addEventListener('click', (e) => {
+$('sheetContent').addEventListener('click', async (e) => {
   const button = e.target.closest('button');
   if (!button) return;
+  if (button.hasAttribute('data-memory-capture')) {
+    try {
+      const photo = await captureMemory();
+      const now = new Date();
+      game.memories.unshift({
+        data: photo,
+        capturedAt: now.toLocaleString('fr-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        caption: memoryCaption(currentScene, game.settings.meadowWeather),
+      });
+      game.memories = game.memories.slice(0, 4);
+      save();
+      drawPanel(true);
+      say('📷 Un joli souvenir est gardé dans le carnet !');
+    } catch {
+      say('Le souvenir n’a pas pu être créé cette fois ♡');
+    }
+    return;
+  }
   if (button.dataset.quest) {
     const type = button.dataset.quest;
     const result = completeQuest(game, type);
@@ -185,6 +251,11 @@ $('sheetContent').addEventListener('change', (e) => {
   if (e.target.id === 'reminderToggle') {
     game.settings.waterReminder = e.target.checked;
     game.settings.nextWaterAt = Date.now() + game.settings.waterMinutes * 60_000;
+    save();
+  }
+  if (e.target.id === 'meadowWeather') {
+    game.settings.meadowWeather = e.target.value;
+    $('screen').dataset.weather = game.settings.meadowWeather;
     save();
   }
   if (e.target.id === 'reminderInterval') {

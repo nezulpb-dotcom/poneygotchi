@@ -1,5 +1,7 @@
 import { ITEMS, xpThreshold } from '../core/game.js';
 
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
 const hearts = (value) => {
   const filled = Math.max(0, Math.min(3, Math.round(value / 100 * 3)));
   return '<span class="hearts">' + Array.from({ length: 3 }, (_, i) => `<span class="${i < filled ? 'on' : ''}">♥</span>`).join('') + '</span>';
@@ -32,6 +34,12 @@ export function renderPanel(tab, game) {
         <div class="task"><span>☁️ Faire une pause</span>${questButton('pause', daily.pause)}</div>
         <p class="panel-small">Pas de quantité d’eau prescrite. Les trois premières confirmations donnent une récompense ; les suivantes restent enregistrées.</p>`;
     }
+    case 'memories': {
+      const memories = game.memories || [];
+      return `<p class="panel-sub">Les petits instants de Rosy restent dans ton carnet, même après avoir fermé la page.</p>
+        <button class="small-btn memory-capture" data-memory-capture>${memories.length >= 4 ? 'Garder ce moment (remplace le plus ancien)' : '📷 Garder ce moment'}</button>
+        ${memories.length ? `<div class="memory-grid">${memories.map((memory) => `<figure class="memory-card"><img src="${escapeHtml(memory.data)}" alt="Souvenir de Rosy"><figcaption><b>${escapeHtml(memory.caption)}</b><small>${escapeHtml(memory.capturedAt)}</small></figcaption></figure>`).join('')}</div>` : '<p class="panel-small">Ton premier souvenir attend un joli moment dans la prairie ✨</p>'}`;
+    }
     case 'shop':
       return `<div class="panel-sub">✧ <b>${pet.stars}</b> étoiles disponibles · Équipe Rosy avec ce que tu débloques.</div><div class="shop-grid">
         ${ITEMS.map(item => {
@@ -53,6 +61,11 @@ export function renderPanel(tab, game) {
         <label class="setting-line">Intervalle <select id="reminderInterval">
           ${[60,90,120].map(n=>`<option value="${n}" ${game.settings.waterMinutes === n ? 'selected' : ''}>${n} min</option>`).join('')}</select></label>
         <p class="panel-small">Aucune alerte entre 22 h et 9 h. Le temps accéléré du jeu n’accélère pas les rappels.</p>
+        <label class="setting-line">Ambiance de la prairie <select id="meadowWeather">
+          <option value="clear" ${game.settings.meadowWeather === 'clear' ? 'selected' : ''}>Temps doux</option>
+          <option value="drizzle" ${game.settings.meadowWeather === 'drizzle' ? 'selected' : ''}>Pluie légère</option>
+        </select></label>
+        <p class="panel-small">La pluie change l’atmosphère sans modifier les fonds de prairie.</p>
         <button class="small-btn secondary" data-reset="true">Recommencer la partie</button>`;
     default: return '';
   }
