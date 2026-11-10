@@ -27,6 +27,15 @@ with sync_playwright() as pw:
     page.locator('[data-tab="missions"]').click()
     page.locator('[data-quest="morning"]').click()
     assert 'Noté' in page.locator('[data-quest="morning"]').text_content()
+    page.locator('[data-tab="memories"]').click()
+    page.locator('[data-memory-capture]').click()
+    page.locator('.memory-card').wait_for(state='visible', timeout=5000)
+    assert page.locator('.memory-card').count() == 1
+    assert page.locator('.memory-card img').get_attribute('src').startswith('data:image/jpeg;base64,')
+    page.locator('[data-tab="settings"]').click()
+    page.locator('#meadowWeather').select_option('drizzle')
+    assert page.locator('#screen').get_attribute('data-weather') == 'drizzle'
+    assert page.locator('.raindrop').count() == 5
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_sheet.png'))
     assert not errors, errors
     print('Browser smoke tests OK; no uncaught JS errors')

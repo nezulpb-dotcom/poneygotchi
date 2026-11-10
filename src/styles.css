@@ -114,3 +114,22 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
  .petal { display: none; }
  .landscape, .bubble { transition: none; }
 }
+
+/* Small keepsake cards stay inside the secondary panel, leaving the home scene clear. */
+.memory-capture { width: 100%; padding: 10px; margin: 2px 0 8px; }
+.memory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.memory-card { margin: 0; min-width: 0; overflow: hidden; border-radius: 12px; background: #f4eaf3; box-shadow: 0 2px 8px #5a42631c; }
+.memory-card img { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+.memory-card figcaption { display: grid; gap: 3px; padding: 7px; }
+.memory-card figcaption b { font-size: 10px; }
+.memory-card figcaption small { color: #907e91; font-size: 9px; }
+
+/* Optional soft drizzle; validated day, dusk, and night backgrounds stay intact. */
+.raindrop { position: absolute; top: -12px; left: 12%; width: 1px; height: 9px; border-radius: 2px; background: #e7efffc2; opacity: 0; }
+.raindrop:nth-of-type(10) { left: 34%; animation-delay: -.7s; }
+.raindrop:nth-of-type(11) { left: 57%; animation-delay: -1.4s; }
+.raindrop:nth-of-type(12) { left: 79%; animation-delay: -.3s; }
+.raindrop:nth-of-type(13) { left: 91%; animation-delay: -1.1s; }
+.phone[data-weather="drizzle"] .raindrop { opacity: .7; animation: soft-rain 2.2s linear infinite; }
+@keyframes soft-rain { to { transform: translateY(510px) translateX(22px); } }
+@media(prefers-reduced-motion:reduce) { .raindrop { display: none; } }

@@ -57,3 +57,18 @@ test('needs clamp and save data restore safely', () => {
   const restored = restoreGame({ ...g, pet: { ...g.pet, energy: 999 } }, date);
   assert.equal(restored.pet.energy, 100);
 });
+
+test('legacy saves gain an empty keepsake album and restored albums stay bounded', () => {
+  const legacy = restoreGame({ pet: { level: 2 } }, date);
+  assert.deepEqual(legacy.memories, []);
+  const valid = (n) => ({ data: 'data:image/jpeg;base64,' + 'a'.repeat(n), capturedAt: '6 nov. 22:00', caption: 'Souvenir' });
+  const restored = restoreGame({ memories: [valid(2), valid(3), valid(4), valid(5), valid(6), { ...valid(2), data: 'data:image/jpeg;base64,\" onerror=alert(1)' }] }, date);
+  assert.equal(restored.memories.length, 4);
+  assert.equal(restored.memories[0].caption, 'Souvenir');
+});
+
+test('meadow weather restores to a safe option for new and old saves', () => {
+  assert.equal(newGame(date).settings.meadowWeather, 'clear');
+  assert.equal(restoreGame({ settings: { meadowWeather: 'drizzle' } }, date).settings.meadowWeather, 'drizzle');
+  assert.equal(restoreGame({ settings: { meadowWeather: 'stormy' } }, date).settings.meadowWeather, 'clear');
+});

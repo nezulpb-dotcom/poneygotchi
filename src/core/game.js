@@ -24,8 +24,9 @@ export function newGame(date = new Date()) {
     pet: { hunger: 82, happiness: 90, energy: 78, hygiene: 88, level: 1, xp: 0, stars: 30 },
     daily: emptyDay(date),
     inventory: ['none'],
+    memories: [],
     equipped: 'none',
-    settings: { waterReminder: false, waterMinutes: 90, nextWaterAt: 0 },
+    settings: { waterReminder: false, waterMinutes: 90, nextWaterAt: 0, meadowWeather: 'clear' },
     lastCareAward: {},
     updatedAt: date.getTime(),
   };
@@ -40,8 +41,12 @@ export function restoreGame(raw, date = new Date()) {
     daily: { ...fresh.daily, ...(raw.daily || {}), meals: { ...fresh.daily.meals, ...(raw.daily?.meals || {}) } },
     settings: { ...fresh.settings, ...(raw.settings || {}) },
     inventory: Array.isArray(raw.inventory) ? [...new Set(['none', ...raw.inventory])] : ['none'],
+    memories: Array.isArray(raw.memories)
+      ? raw.memories.filter((memory) => memory && typeof memory.data === 'string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/]*={0,2}$/.test(memory.data) && memory.data.length <= 180_000 && typeof memory.capturedAt === 'string' && typeof memory.caption === 'string').slice(0, 4)
+      : [],
     lastCareAward: raw.lastCareAward || {},
   };
+  if (!['clear', 'drizzle'].includes(merged.settings.meadowWeather)) merged.settings.meadowWeather = 'clear';
   for (const k of ['hunger', 'happiness', 'energy', 'hygiene']) {
     merged.pet[k] = clamp(Number(merged.pet[k]) || 0);
   }
