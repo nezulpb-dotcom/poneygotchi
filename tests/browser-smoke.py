@@ -11,7 +11,10 @@ with sync_playwright() as pw:
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.set_content(html, wait_until='load')
     page.wait_for_timeout(1300)
-    assert page.locator('#timeText').inner_text() != '20:05'
+    clock = page.locator('#timeText').inner_text()
+    assert len(clock) == 5 and clock[2] == ':'
+    expected_date = page.evaluate("new Date().toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })")
+    assert page.locator('#todayDate').inner_text() == expected_date
     assert page.locator('#hud').get_attribute('aria-hidden') == 'true'
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_lockscreen.png'))
     page.locator('#screenTap').click(position={'x':24,'y':215})
@@ -28,6 +31,13 @@ with sync_playwright() as pw:
     page.locator('[data-quest="morning"]').click()
     assert 'Noté' in page.locator('[data-quest="morning"]').text_content()
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_sheet.png'))
+    page.locator('[data-tab="memory"]').click()
+    page.locator('[data-memory-start]').click()
+    assert page.locator('[data-memory-card]').count() == 6
+    first_card = page.locator('[data-memory-card]').nth(0)
+    assert first_card.inner_text() == '✧'
+    first_card.click()
+    assert first_card.inner_text() != '✧'
     assert not errors, errors
     print('Browser smoke tests OK; no uncaught JS errors')
     browser.close()

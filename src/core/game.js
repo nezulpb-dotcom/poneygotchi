@@ -15,7 +15,7 @@ export const localDateKey = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 export function emptyDay(date = new Date()) {
-  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false };
+  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false };
 }
 
 export function newGame(date = new Date()) {

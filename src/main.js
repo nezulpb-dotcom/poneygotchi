@@ -1,5 +1,6 @@
 import { loadGame, saveGame } from './core/storage.js';
 import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp } from './core/game.js';
+import { createMemoryRound, revealMemoryCard, recordMemoryWin } from './core/memory-game.js';
 import { PonyAnimator } from './graphics/pony.js';
 import { renderMiniStats, renderPanel } from './ui/panels.js';
 
@@ -18,6 +19,7 @@ let lastFrame = performance.now();
 let needAccumulator = 0;
 let lastSaved = Date.now();
 let currentScene = '';
+let memoryRound = null;
 
 function save() { game.updatedAt = Date.now(); saveGame(game); }
 function refreshStats() { $('miniStats').innerHTML = renderMiniStats(game.pet); }
@@ -62,7 +64,7 @@ function closePanel() {
 function drawPanel(preserveScroll = false) {
   const box = $('sheetContent');
   const scroll = preserveScroll ? $('sheetWrap').querySelector('.bottom-sheet').scrollTop : 0;
-  box.innerHTML = renderPanel(panelTab, game);
+  box.innerHTML = renderPanel(panelTab, game, memoryRound);
   $('sheetWrap').querySelector('.bottom-sheet').scrollTop = scroll;
   for (const button of document.querySelectorAll('[data-tab]')) button.classList.toggle('active', button.dataset.tab === panelTab);
 }
@@ -163,6 +165,22 @@ for (const button of document.querySelectorAll('[data-tab]')) button.addEventLis
 $('sheetContent').addEventListener('click', (e) => {
   const button = e.target.closest('button');
   if (!button) return;
+  if (button.hasAttribute('data-memory-start')) {
+    memoryRound = createMemoryRound();
+    drawPanel();
+    return;
+  }
+  if (button.hasAttribute('data-memory-card')) {
+    const result = revealMemoryCard(memoryRound, Number(button.dataset.memoryCard));
+    memoryRound = result.round;
+    if (result.result === 'complete') {
+      const payout = recordMemoryWin(game.daily, (reward) => grant(game, reward));
+      say(payout.rewarded ? '🌸 Bravo ! +12 étoiles et +15 XP.' : '🌸 Toutes les fleurs sont réunies !');
+      save();
+    }
+    drawPanel(true);
+    return;
+  }
   if (button.dataset.quest) {
     const type = button.dataset.quest;
     const result = completeQuest(game, type);

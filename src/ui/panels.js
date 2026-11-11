@@ -17,7 +17,7 @@ export function renderMiniStats(pet) {
 const questButton = (type, done, label = 'Noter') =>
   `<button class="small-btn" data-quest="${type}" ${done ? 'disabled' : ''}>${done ? '✓ Noté' : label}</button>`;
 
-export function renderPanel(tab, game) {
+export function renderPanel(tab, game, memoryRound = null) {
   const { pet, daily } = game;
   switch (tab) {
     case 'missions': {
@@ -47,6 +47,34 @@ export function renderPanel(tab, game) {
         <p class="panel-small">Chaque niveau donne 15 étoiles ✧ et ouvre progressivement des accessoires.</p>
         <div class="panel-kicker">Besoins de Rosy</div>
         ${[['💗 Bonheur',pet.happiness],['🍎 Faim',pet.hunger],['⚡ Énergie',pet.energy],['💧 Propreté',pet.hygiene]].map(([k,v])=>`<div class="task"><span>${k}</span><b>${Math.round(v)}%</b></div>`).join('')}`;
+    case 'memory': {
+      const rewardNote = game.daily.memoryRewarded
+        ? 'La petite récompense du jour est déjà obtenue ; tu peux rejouer pour le plaisir.'
+        : 'Première victoire du jour : +12 étoiles et +15 XP.';
+      if (!memoryRound) {
+        return `<p class="panel-sub">Retrouve les trois paires de fleurs cachées. Pas de chronomètre : Rosy t’attend tranquillement.</p>
+          <p class="panel-small">${rewardNote}</p>
+          <button class="small-btn" data-memory-start>Commencer une partie</button>`;
+      }
+      const cards = memoryRound.cards.map((card, index) => {
+        const visible = card.revealed || card.matched;
+        const label = visible ? `Carte ${index + 1} : ${card.symbol}` : `Retourner la carte ${index + 1}`;
+        return `<button class="memory-card${card.matched ? ' matched' : ''}" data-memory-card="${index}" aria-label="${label}" aria-pressed="${visible}" ${card.matched ? 'disabled' : ''}>${visible ? card.symbol : '✧'}</button>`;
+      }).join('');
+      const status = memoryRound.finished
+        ? 'Toutes les fleurs sont réunies ! Rosy est ravie.'
+        : memoryRound.pendingHide.length
+          ? 'Ces deux fleurs sont différentes. Touche une autre carte pour continuer.'
+          : memoryRound.firstCard !== null
+            ? 'Jolie trouvaille ! Cherche la fleur jumelle.'
+            : 'Retourne deux cartes pour retrouver une paire.';
+      return `<p class="panel-sub">Le jardin de mémoire : trois paires, six cartes, à ton rythme.</p>
+        <div class="memory-grid" aria-label="Cartes du jeu de mémoire">${cards}</div>
+        <p class="panel-small">${status}</p>
+        <p class="panel-small">Paires : ${memoryRound.matches}/3 · Coups : ${memoryRound.moves}</p>
+        <p class="panel-small">${rewardNote}</p>
+        ${memoryRound.finished ? '<button class="small-btn" data-memory-start>Rejouer</button>' : ''}`;
+    }
     case 'settings':
       return `<div class="panel-sub">Les données sont conservées localement dans ton navigateur. Les rappels fonctionnent uniquement tant que la page est ouverte.</div>
         <label class="setting-line">Rappels d’eau (facultatifs) <input id="reminderToggle" type="checkbox" ${game.settings.waterReminder ? 'checked' : ''}></label>
