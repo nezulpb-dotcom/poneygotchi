@@ -11,9 +11,12 @@ const AUTONOMOUS_HABITS = [
   { state: 'play', message: 'Rosy fait un petit pas de danse !', speak: true, min: 3.5, max: 5.5 },
 ];
 
-export function chooseAutonomousHabit(random = Math.random) {
-  const index = Math.min(AUTONOMOUS_HABITS.length - 1, Math.floor(random() * AUTONOMOUS_HABITS.length));
-  return { ...AUTONOMOUS_HABITS[index] };
+export function chooseAutonomousHabit(random = Math.random, previousState = null) {
+  const choices = previousState
+    ? AUTONOMOUS_HABITS.filter((habit) => habit.state !== previousState)
+    : AUTONOMOUS_HABITS;
+  const index = Math.min(choices.length - 1, Math.floor(random() * choices.length));
+  return { ...choices[index] };
 }
 
 export class PonyAnimator {
@@ -21,6 +24,7 @@ export class PonyAnimator {
     this.el = el;
     this.wrap = el.closest('.pony-wrap');
     this.onHabit = onHabit;
+    this.lastHabitState = null;
     this.state = 'idle';
     this.direction = 1;
     this.x = 90;
@@ -49,7 +53,8 @@ export class PonyAnimator {
       else if (pet.energy < 12) this.state = 'sleep';
       else if (this.behaviorElapsed > this.behaviorDuration) {
         this.behaviorElapsed = 0;
-        const habit = chooseAutonomousHabit();
+        const habit = chooseAutonomousHabit(Math.random, this.lastHabitState);
+        this.lastHabitState = habit.state;
         this.state = habit.state;
         this.behaviorDuration = habit.min + Math.random() * (habit.max - habit.min);
         if (habit.state === 'walk' || Math.random() < .45) this.direction *= -1;
