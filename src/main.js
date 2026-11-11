@@ -5,7 +5,10 @@ import { renderMiniStats, renderPanel } from './ui/panels.js';
 
 const $ = (id) => document.getElementById(id);
 const game = loadGame();
-const pony = new PonyAnimator($('ponySprite'));
+const pony = new PonyAnimator($('ponySprite'), (habit) => {
+  $('statusPetal').textContent = habit.message;
+  if (habit.speak) say(habit.message);
+});
 let hudOpen = false;
 let panelTab = 'missions';
 let hudHideTimer;
