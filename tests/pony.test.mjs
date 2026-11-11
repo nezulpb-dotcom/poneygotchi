@@ -49,6 +49,7 @@ test('sleep action holds its pose and reduced motion stops walking and bouncing'
 test('autonomous habits are varied and reuse available sprite sheets', () => {
  assert.equal(chooseAutonomousHabit(() => 0).state, 'sniff');
  assert.equal(chooseAutonomousHabit(() => .99).state, 'play');
+ assert.equal(chooseAutonomousHabit(() => 0, 'sniff').state, 'curious');
  const events = [];
  const pony = animator((habit) => events.push(habit));
  const originalRandom = Math.random;
