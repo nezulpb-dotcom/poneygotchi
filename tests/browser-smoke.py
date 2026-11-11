@@ -28,6 +28,13 @@ with sync_playwright() as pw:
     page.locator('[data-quest="morning"]').click()
     assert 'Noté' in page.locator('[data-quest="morning"]').text_content()
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_sheet.png'))
+    page.locator('[data-tab="memory"]').click()
+    page.locator('[data-memory-start]').click()
+    assert page.locator('[data-memory-card]').count() == 6
+    first_card = page.locator('[data-memory-card]').nth(0)
+    assert first_card.inner_text() == '✧'
+    first_card.click()
+    assert first_card.inner_text() != '✧'
     assert not errors, errors
     print('Browser smoke tests OK; no uncaught JS errors')
     browser.close()

@@ -114,3 +114,10 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
  .petal { display: none; }
  .landscape, .bubble { transition: none; }
 }
+
+/* Mini-jeu de mémoire : une feuille secondaire compacte, sans toucher au lockscreen. */
+.memory-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 250px; margin: 12px auto; }
+.memory-card { min-height: 52px; border: 1px solid #d9c1df; border-radius: 13px; background: linear-gradient(145deg, #fffaff, #f0e5f5); color: #75577f; font-size: 23px; box-shadow: 0 2px 7px #74547d22; }
+.memory-card[aria-pressed="true"] { background: #fff8e9; border-color: #e7c98f; }
+.memory-card.matched { background: #e9f3df; border-color: #b8d3a6; color: #55764d; cursor: default; }
+.memory-card:disabled { opacity: 1; }

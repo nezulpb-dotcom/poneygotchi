@@ -12,6 +12,7 @@ modules=[
  'src/core/storage.js',
  'src/graphics/pony.js',
  'src/ui/panels.js',
+ 'src/core/memory-game.js',
  'src/main.js',
 ]
 
