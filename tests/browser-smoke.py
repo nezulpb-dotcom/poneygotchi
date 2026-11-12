@@ -29,9 +29,9 @@ with sync_playwright() as pw:
     page.wait_for_timeout(80)
     assert page.locator('#ponyWrap').get_attribute('data-pose') == 'look'
     assert pet_tap.get_attribute('class').find('pet-burst') >= 0
-    affection = page.evaluate("JSON.parse(localStorage.getItem('ponygotchi_v08')).pet.happiness")
+    first_pet_message = page.locator('#bubble').inner_text()
     pet_tap.click(position={'x':72,'y':18})
-    assert page.evaluate("JSON.parse(localStorage.getItem('ponygotchi_v08')).pet.happiness") == affection
+    assert page.locator('#bubble').inner_text() == first_pet_message
     page.wait_for_timeout(450)
     pet_tap.click(position={'x':72,'y':70})
     assert pet_tap.get_attribute('data-zone') == 'cheek'
