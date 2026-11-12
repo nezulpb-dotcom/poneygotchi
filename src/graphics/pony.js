@@ -42,7 +42,7 @@ export class PonyAnimator {
     }
   }
   action(pose, ms = 2400) { this.state = pose; this.actionUntil = performance.now() + ms; this.frame = 0; this.elapsed = 0; this.behaviorElapsed = 0; }
-  pet() { this.action('happy', 1400); }
+  pet(pose = 'happy', ms = 1400) { this.action(pose, ms); }
   update(dt, now, pet) {
     const reduced = this.reducedMotion.matches;
     this.elapsed += dt;
