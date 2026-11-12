@@ -74,8 +74,8 @@ export function renderPanel(tab, game, memoryRound = null) {
             : 'Retourne deux cartes pour retrouver une paire.';
       const modeName = pairCount === 4 ? 'Prairie fleurie' : 'Jardin doux';
       return `<p class="panel-sub">${modeName} : ${pairCount} paires de fleurs, à ton rythme.</p>
-        <div class="memory-grid${pairCount === 4 ? ' memory-grid-4' : ''}" aria-label="Cartes du jeu de mémoire">${cards}</div>
-        <p class="panel-small">${status}</p>
+        <div class="memory-grid${pairCount === 4 ? ' memory-grid-4' : ''}" role="group" aria-label="Cartes du jardin de mémoire, ${pairCount} paires">${cards}</div>
+        <p class="panel-small" role="status" aria-live="polite" aria-atomic="true">${status}</p>
         <p class="panel-small">Paires : ${memoryRound.matches}/${pairCount} · Coups : ${memoryRound.moves}</p>
         <p class="panel-small">${rewardNote}</p>
         ${memoryRound.finished ? '<button class="small-btn" data-memory-start="3">Rejouer au jardin doux</button><button class="small-btn" data-memory-start="4">Rejouer à la prairie fleurie</button>' : ''}`;
