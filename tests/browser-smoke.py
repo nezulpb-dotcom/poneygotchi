@@ -23,6 +23,25 @@ with sync_playwright() as pw:
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_hud.png'))
     page.locator('[data-care="feed"]').click()
     assert 'Miam' in page.locator('#bubble').text_content()
+    pet_tap = page.locator('#petTap')
+    pet_tap.click(position={'x':72,'y':18})
+    assert pet_tap.get_attribute('data-zone') == 'forehead'
+    page.wait_for_timeout(80)
+    assert page.locator('#ponyWrap').get_attribute('data-pose') == 'look'
+    assert pet_tap.get_attribute('class').find('pet-burst') >= 0
+    affection = page.evaluate("JSON.parse(localStorage.getItem('ponygotchi_v08')).pet.happiness")
+    pet_tap.click(position={'x':72,'y':18})
+    assert page.evaluate("JSON.parse(localStorage.getItem('ponygotchi_v08')).pet.happiness") == affection
+    page.wait_for_timeout(450)
+    pet_tap.click(position={'x':72,'y':70})
+    assert pet_tap.get_attribute('data-zone') == 'cheek'
+    page.wait_for_timeout(80)
+    assert page.locator('#ponyWrap').get_attribute('data-pose') == 'happy'
+    page.wait_for_timeout(450)
+    pet_tap.click(position={'x':72,'y':120})
+    assert pet_tap.get_attribute('data-zone') == 'mane'
+    page.wait_for_timeout(80)
+    assert page.locator('#ponyWrap').get_attribute('data-pose') == 'play'
     page.locator('#openMenu').click()
     assert page.locator('#sheetWrap').get_attribute('aria-hidden') == 'false'
     page.locator('[data-tab="shop"]').click()

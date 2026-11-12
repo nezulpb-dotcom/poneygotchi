@@ -1,6 +1,7 @@
 import { loadGame, saveGame } from './core/storage.js';
 import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp } from './core/game.js';
 import { createMemoryRound, revealMemoryCard, recordMemoryWin } from './core/memory-game.js';
+import { createPettingState, petRosy } from './core/petting.js';
 import { PonyAnimator } from './graphics/pony.js';
 import { renderMiniStats, renderPanel } from './ui/panels.js';
 
@@ -15,11 +16,13 @@ let panelTab = 'missions';
 let hudHideTimer;
 let bubbleTimer;
 let sceneTimer;
+let petBurstTimer;
 let lastFrame = performance.now();
 let needAccumulator = 0;
 let lastSaved = Date.now();
 let currentScene = '';
 let memoryRound = null;
+let pettingState = createPettingState();
 
 function save() { game.updatedAt = Date.now(); saveGame(game); }
 function refreshStats() { $('miniStats').innerHTML = renderMiniStats(game.pet); }
@@ -146,10 +149,32 @@ function animate(now) {
 }
 
 $('screenTap').addEventListener('click', () => hudOpen ? hideHud() : showHud());
-$('petTap').addEventListener('click', () => {
-  game.pet.happiness = clamp(game.pet.happiness + 2);
-  pony.pet();
-  say('♡ Rosy adore les caresses !');
+$('petTap').addEventListener('click', (event) => {
+  const button = $('petTap');
+  const bounds = button.getBoundingClientRect();
+  const reaction = petRosy(pettingState, {
+    x: event.clientX - bounds.left,
+    y: event.clientY - bounds.top,
+    width: bounds.width,
+    height: bounds.height,
+  }, performance.now());
+  if (!reaction.accepted) return;
+
+  pettingState = reaction.state;
+  game.pet.happiness = clamp(game.pet.happiness + reaction.happiness);
+  pony.pet(reaction.pose, reaction.duration);
+  $('statusPetal').textContent = reaction.message;
+  say(reaction.message);
+
+  button.dataset.zone = reaction.zone;
+  button.style.setProperty('--pet-x', `${reaction.x}px`);
+  button.style.setProperty('--pet-y', `${reaction.y}px`);
+  button.classList.remove('pet-burst');
+  void button.offsetWidth;
+  button.classList.add('pet-burst');
+  clearTimeout(petBurstTimer);
+  petBurstTimer = setTimeout(() => button.classList.remove('pet-burst'), 800);
+
   showHud();
   save();
 });

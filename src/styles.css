@@ -121,3 +121,30 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .memory-card[aria-pressed="true"] { background: #fff8e9; border-color: #e7c98f; }
 .memory-card.matched { background: #e9f3df; border-color: #b8d3a6; color: #55764d; cursor: default; }
 .memory-card:disabled { opacity: 1; }
+
+
+/* Caresses tactiles : la zone touchée fait réagir Rosy et libère un petit cœur. */
+.pet-tap { padding: 0; }
+.pet-tap::after {
+  content: '♡';
+  position: absolute;
+  left: var(--pet-x, 50%);
+  top: var(--pet-y, 42%);
+  color: #ffd8ef;
+  font-size: 30px;
+  line-height: 1;
+  text-shadow: 0 2px 8px #77517f, 0 0 10px #fff8;
+  opacity: 0;
+  pointer-events: none;
+}
+.pet-tap[data-zone="forehead"]::after { color: #fff0b8; }
+.pet-tap[data-zone="mane"]::after { color: #e8d9ff; }
+.pet-tap.pet-burst::after { animation: pet-heart-pop .78s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes pet-heart-pop {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(.35); }
+  18% { opacity: 1; transform: translate(-50%, -5px) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -35px) scale(.8); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .pet-tap.pet-burst::after { animation: none; opacity: .9; transform: translate(-50%, -5px); }
+}
