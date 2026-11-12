@@ -191,7 +191,8 @@ $('sheetContent').addEventListener('click', (e) => {
   const button = e.target.closest('button');
   if (!button) return;
   if (button.hasAttribute('data-memory-start')) {
-    memoryRound = createMemoryRound();
+    const pairCount = Number(button.dataset.memoryStart) === 4 ? 4 : 3;
+    memoryRound = createMemoryRound(Math.random, pairCount);
     drawPanel();
     return;
   }

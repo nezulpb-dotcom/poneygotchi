@@ -52,10 +52,14 @@ export function renderPanel(tab, game, memoryRound = null) {
         ? 'La petite récompense du jour est déjà obtenue ; tu peux rejouer pour le plaisir.'
         : 'Première victoire du jour : +12 étoiles et +15 XP.';
       if (!memoryRound) {
-        return `<p class="panel-sub">Retrouve les trois paires de fleurs cachées. Pas de chronomètre : Rosy t’attend tranquillement.</p>
-          <p class="panel-small">${rewardNote}</p>
-          <button class="small-btn" data-memory-start>Commencer une partie</button>`;
+        return `<p class="panel-sub">Choisis ton petit défi floral. Aucun chronomètre : Rosy t’attend tranquillement.</p>
+          <div class="memory-mode-list">
+            <button class="small-btn" data-memory-start="3">Jardin doux · 3 paires</button>
+            <button class="small-btn" data-memory-start="4">Prairie fleurie · 4 paires</button>
+          </div>
+          <p class="panel-small">${rewardNote}</p>`;
       }
+      const pairCount = memoryRound.pairCount === 4 ? 4 : 3;
       const cards = memoryRound.cards.map((card, index) => {
         const visible = card.revealed || card.matched;
         const label = visible ? `Carte ${index + 1} : ${card.symbol}` : `Retourner la carte ${index + 1}`;
@@ -68,12 +72,13 @@ export function renderPanel(tab, game, memoryRound = null) {
           : memoryRound.firstCard !== null
             ? 'Jolie trouvaille ! Cherche la fleur jumelle.'
             : 'Retourne deux cartes pour retrouver une paire.';
-      return `<p class="panel-sub">Le jardin de mémoire : trois paires, six cartes, à ton rythme.</p>
-        <div class="memory-grid" aria-label="Cartes du jeu de mémoire">${cards}</div>
-        <p class="panel-small">${status}</p>
-        <p class="panel-small">Paires : ${memoryRound.matches}/3 · Coups : ${memoryRound.moves}</p>
+      const modeName = pairCount === 4 ? 'Prairie fleurie' : 'Jardin doux';
+      return `<p class="panel-sub">${modeName} : ${pairCount} paires de fleurs, à ton rythme.</p>
+        <div class="memory-grid${pairCount === 4 ? ' memory-grid-4' : ''}" role="group" aria-label="Cartes du jardin de mémoire, ${pairCount} paires">${cards}</div>
+        <p class="panel-small" role="status" aria-live="polite" aria-atomic="true">${status}</p>
+        <p class="panel-small">Paires : ${memoryRound.matches}/${pairCount} · Coups : ${memoryRound.moves}</p>
         <p class="panel-small">${rewardNote}</p>
-        ${memoryRound.finished ? '<button class="small-btn" data-memory-start>Rejouer</button>' : ''}`;
+        ${memoryRound.finished ? '<button class="small-btn" data-memory-start="3">Rejouer au jardin doux</button><button class="small-btn" data-memory-start="4">Rejouer à la prairie fleurie</button>' : ''}`;
     }
     case 'settings':
       return `<div class="panel-sub">Les données sont conservées localement dans ton navigateur. Les rappels fonctionnent uniquement tant que la page est ouverte.</div>

@@ -4,14 +4,32 @@ import { createMemoryRound, revealMemoryCard, recordMemoryWin } from '../src/cor
 import { newGame, advanceDay } from '../src/core/game.js';
 
 const date = new Date('2026-11-11T12:00:00');
+const FLOWERS = ['🌸', '🌼', '🍀', '🌷'];
 
-test('round contains three complete pairs and unique card ids', () => {
+test('default round contains three complete pairs and unique card ids', () => {
   const round = createMemoryRound(() => 0);
+  assert.equal(round.pairCount, 3);
   assert.equal(round.cards.length, 6);
   assert.equal(new Set(round.cards.map((card) => card.id)).size, 6);
-  for (const symbol of ['🌸', '🌼', '🍀']) {
+  for (const symbol of FLOWERS.slice(0, 3)) {
     assert.equal(round.cards.filter((card) => card.symbol === symbol).length, 2);
   }
+});
+
+test('flower meadow mode contains four complete pairs', () => {
+  const round = createMemoryRound(() => 0, 4);
+  assert.equal(round.pairCount, 4);
+  assert.equal(round.cards.length, 8);
+  assert.equal(new Set(round.cards.map((card) => card.id)).size, 8);
+  for (const symbol of FLOWERS) {
+    assert.equal(round.cards.filter((card) => card.symbol === symbol).length, 2);
+  }
+});
+
+test('unsupported difficulty safely falls back to the three-pair garden', () => {
+  const round = createMemoryRound(() => 0, 99);
+  assert.equal(round.pairCount, 3);
+  assert.equal(round.cards.length, 6);
 });
 
 test('first pick reveals one card and matching pick locks the pair', () => {
@@ -45,10 +63,10 @@ test('a mismatch remains visible until the next selection, then hides safely', (
   assert.equal(next.round.cards[nextIndex].revealed, true);
 });
 
-test('three pairs complete the round without a timer', () => {
+test('three pairs complete the default round without a timer', () => {
   let round = createMemoryRound(() => 0);
   let lastResult = '';
-  for (const symbol of ['🌸', '🌼', '🍀']) {
+  for (const symbol of FLOWERS.slice(0, 3)) {
     const pair = round.cards.map((card, index) => ({ card, index })).filter(({ card }) => card.symbol === symbol);
     let step = revealMemoryCard(round, pair[0].index);
     round = step.round;
@@ -61,6 +79,24 @@ test('three pairs complete the round without a timer', () => {
   assert.equal(round.matches, 3);
   assert.equal(round.moves, 3);
   assert.equal(revealMemoryCard(round, 0).result, 'ignored');
+});
+
+test('four pairs complete the larger round only on the final match', () => {
+  let round = createMemoryRound(() => 0, 4);
+  let lastResult = '';
+  for (const symbol of FLOWERS) {
+    const pair = round.cards.map((card, index) => ({ card, index })).filter(({ card }) => card.symbol === symbol);
+    let step = revealMemoryCard(round, pair[0].index);
+    round = step.round;
+    step = revealMemoryCard(round, pair[1].index);
+    round = step.round;
+    lastResult = step.result;
+    if (symbol !== FLOWERS[FLOWERS.length - 1]) assert.equal(round.finished, false);
+  }
+  assert.equal(lastResult, 'complete');
+  assert.equal(round.finished, true);
+  assert.equal(round.matches, 4);
+  assert.equal(round.moves, 4);
 });
 
 test('daily reward is granted once and resets with the local day', () => {

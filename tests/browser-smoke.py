@@ -51,12 +51,18 @@ with sync_playwright() as pw:
     assert 'Noté' in page.locator('[data-quest="morning"]').text_content()
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_sheet.png'))
     page.locator('[data-tab="memory"]').click()
-    page.locator('[data-memory-start]').click()
-    assert page.locator('[data-memory-card]').count() == 6
+    assert page.locator('[data-memory-start="3"]').count() == 1
+    assert page.locator('[data-memory-start="4"]').count() == 1
+    page.locator('[data-memory-start="4"]').click()
+    assert page.locator('[data-memory-card]').count() == 8
+    assert page.locator('.memory-grid-4').count() == 1
+    assert page.locator('.memory-grid-4').get_attribute('aria-label') == 'Cartes du jardin de mémoire, 4 paires'
+    assert page.locator('[role="status"][aria-live="polite"]').count() == 1
     first_card = page.locator('[data-memory-card]').nth(0)
     assert first_card.inner_text() == '✧'
     first_card.click()
     assert first_card.inner_text() != '✧'
+    assert 'Paires : 0/4' in page.locator('#sheetContent').inner_text()
     assert not errors, errors
     print('Browser smoke tests OK; no uncaught JS errors')
     browser.close()
