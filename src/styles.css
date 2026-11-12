@@ -148,3 +148,10 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @media(prefers-reduced-motion:reduce) {
   .pet-tap.pet-burst::after { animation: none; opacity: .9; transform: translate(-50%, -5px); }
 }
+
+
+/* Deux formats de jeu adaptés à la feuille 320 × 480. */
+.memory-mode-list { display: grid; gap: 7px; margin: 10px 0; }
+.memory-mode-list .small-btn { width: 100%; min-height: 38px; font-size: 11px; }
+.memory-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 284px; }
+.memory-grid-4 .memory-card { min-height: 48px; border-radius: 10px; font-size: 20px; }

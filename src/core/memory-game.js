@@ -1,14 +1,20 @@
-const SYMBOLS = ['🌸', '🌼', '🍀'];
+const SYMBOLS = ['🌸', '🌼', '🍀', '🌷'];
+const DEFAULT_PAIR_COUNT = 3;
+const MAX_PAIR_COUNT = 4;
 
-export function createMemoryRound(random = Math.random) {
-  const cards = [...SYMBOLS, ...SYMBOLS].map((symbol, id) => ({ id, symbol, revealed: false, matched: false }));
+const normalizePairCount = (value) => value === MAX_PAIR_COUNT ? MAX_PAIR_COUNT : DEFAULT_PAIR_COUNT;
+
+export function createMemoryRound(random = Math.random, requestedPairCount = DEFAULT_PAIR_COUNT) {
+  const pairCount = normalizePairCount(requestedPairCount);
+  const symbols = SYMBOLS.slice(0, pairCount);
+  const cards = [...symbols, ...symbols].map((symbol, id) => ({ id, symbol, revealed: false, matched: false }));
   for (let i = cards.length - 1; i > 0; i--) {
     const sample = Number(random());
     const safeSample = Number.isFinite(sample) ? Math.max(0, Math.min(0.999999, sample)) : 0;
     const j = Math.floor(safeSample * (i + 1));
     [cards[i], cards[j]] = [cards[j], cards[i]];
   }
-  return { cards, firstCard: null, pendingHide: [], moves: 0, matches: 0, finished: false };
+  return { cards, pairCount, firstCard: null, pendingHide: [], moves: 0, matches: 0, finished: false };
 }
 
 export function revealMemoryCard(round, index) {
@@ -31,7 +37,8 @@ export function revealMemoryCard(round, index) {
     cards[firstCard].matched = true;
     cards[index].matched = true;
     const matches = round.matches + 1;
-    const finished = matches === SYMBOLS.length;
+    const pairCount = Number.isInteger(round.pairCount) ? round.pairCount : DEFAULT_PAIR_COUNT;
+    const finished = matches === pairCount;
     return { round: { ...round, cards, firstCard: null, pendingHide: [], moves, matches, finished }, result: finished ? 'complete' : 'match' };
   }
   return { round: { ...round, cards, firstCard: null, pendingHide: [firstCard, index], moves }, result: 'mismatch' };
