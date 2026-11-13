@@ -160,3 +160,21 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 /* Indices de Rosy : contraste doux, sans animation supplémentaire ni surcharge mémoire. */
 .memory-card.hinted { background: linear-gradient(145deg, #fff4d9, #f8e4b6); border-color: #d5a85e; color: #805c2f; box-shadow: 0 0 0 2px #f7e7b6, 0 2px 8px #8a653322; }
 .memory-hint { display: block; width: 100%; min-height: 36px; margin: 0 auto 8px; }
+
+
+/* Le CrowPanel 320 × 480 utilise toute la dalle, sans cadre ni marges de démonstration. */
+@media (max-width: 340px) and (max-height: 520px) {
+  body { place-items: start center; }
+  .app-shell { width: 320px; height: 480px; padding: 0; gap: 0; }
+  .top-label, .under-note { display: none; }
+  .phone { width: 320px; height: 480px; max-width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .bottom-sheet { padding: 8px 10px 12px; }
+  .sheet-handle { margin-bottom: 7px; }
+  .sheet-tabs { margin: 7px 0; }
+  .panel-sub { margin: 6px 0; }
+  .memory-grid { margin: 7px auto; gap: 5px; }
+  .memory-grid-4 { gap: 4px; }
+  .memory-grid-4 .memory-card { min-height: 40px; font-size: 18px; }
+  .memory-hint { min-height: 32px; margin-bottom: 4px; }
+  .panel-small { margin: 5px 0; font-size: 9px; }
+}

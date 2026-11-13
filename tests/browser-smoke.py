@@ -74,6 +74,15 @@ with sync_playwright() as pw:
     assert 'Coups : 1' in page.locator('#sheetContent').inner_text()
     assert 'Deux fleurs pareilles' in page.locator('#bubble').inner_text()
     assert '1 indice' in page.locator('[data-memory-hint]').inner_text()
+    page.set_viewport_size({'width': 320, 'height': 480})
+    screen_box = page.locator('#screen').bounding_box()
+    assert screen_box['x'] == 0 and screen_box['y'] == 0
+    assert screen_box['width'] == 320 and screen_box['height'] == 480
+    assert not page.locator('.top-label').is_visible()
+    assert not page.locator('.under-note').is_visible()
+    assert page.locator('.memory-grid-4').is_visible()
+    hint_box = page.locator('[data-memory-hint]').bounding_box()
+    assert hint_box['y'] + hint_box['height'] <= 480
     assert not errors, errors
     print('Browser smoke tests OK; no uncaught JS errors')
     browser.close()
