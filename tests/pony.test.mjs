@@ -14,6 +14,15 @@ function animator(onHabit = null) {
  const el = { style: {}, src: '', closest: () => wrap };
  return new PonyAnimator(el, onHabit);
 }
+function habitDistribution(pet) {
+ const counts = {};
+ for (let i = 0; i < 2000; i++) {
+  const sample = (i + .5) / 2000;
+  const habit = chooseAutonomousHabit(() => sample, null, pet);
+  counts[habit.state] = (counts[habit.state] || 0) + 1;
+ }
+ return counts;
+}
 test('walking stays within the meadow and touch target follows Rosy', () => {
  const pony = animator(); pony.state = 'walk'; pony.x = 157;
  pony.update(1, 100, healthy);
@@ -65,4 +74,21 @@ test('autonomous habits are varied and reuse available sprite sheets', () => {
  assert.match(pony.el.src, /eat_00/);
  assert.equal(events.length, 1);
  assert.match(events[0].message, /renifle/);
+});
+test('tired Rosy chooses resting and grooming habits more often than active ones', () => {
+ const counts = habitDistribution({ energy: 20, happiness: 70, hunger: 80, hygiene: 80 });
+ assert.ok(counts.doze + counts.idle + counts.groom > counts.play + counts.walk, JSON.stringify(counts));
+});
+test('energetic and happy Rosy chooses play and exploration more often than dozing', () => {
+ const counts = habitDistribution({ energy: 90, happiness: 90, hunger: 80, hygiene: 80 });
+ assert.ok(counts.play + counts.walk > counts.doze, JSON.stringify(counts));
+});
+test('low hunger makes sniffing and curiosity more likely than play', () => {
+ const counts = habitDistribution({ energy: 80, happiness: 70, hunger: 15, hygiene: 80 });
+ assert.ok(counts.sniff > counts.play, JSON.stringify(counts));
+});
+test('weighted habit selection remains safe for invalid random values and avoids repetition', () => {
+ const tired = { energy: 20, happiness: 50, hunger: 50, hygiene: 50 };
+ assert.equal(chooseAutonomousHabit(() => Number.NaN, null, tired).state, 'sniff');
+ assert.notEqual(chooseAutonomousHabit(() => 0, 'sniff', tired).state, 'sniff');
 });
