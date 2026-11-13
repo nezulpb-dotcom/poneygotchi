@@ -11,12 +11,53 @@ const AUTONOMOUS_HABITS = [
   { state: 'play', message: 'Rosy fait un petit pas de danse !', speak: true, min: 3.5, max: 5.5 },
 ];
 
-export function chooseAutonomousHabit(random = Math.random, previousState = null) {
+function habitWeight(habit, pet) {
+  let weight = 1;
+  const energy = Number(pet?.energy);
+  const happiness = Number(pet?.happiness);
+  const hunger = Number(pet?.hunger);
+  const hygiene = Number(pet?.hygiene);
+
+  if (Number.isFinite(energy)) {
+    if (energy < 35) {
+      const tired = { doze: 3.4, idle: 1.6, groom: 1.4, stretch: 1.3, walk: 0.35, play: 0.25 };
+      weight *= tired[habit.state] ?? 1;
+    } else if (energy > 70) {
+      const lively = { play: 1.8, walk: 1.6, curious: 1.3, stretch: 1.3, doze: 0.45, idle: 0.75 };
+      weight *= lively[habit.state] ?? 1;
+    }
+  }
+  if (Number.isFinite(happiness)) {
+    if (happiness < 35) {
+      const gentle = { curious: 1.5, sniff: 1.4, groom: 1.1, play: 0.55, walk: 0.75 };
+      weight *= gentle[habit.state] ?? 1;
+    } else if (happiness > 75) {
+      const cheerful = { play: 1.5, walk: 1.25, curious: 1.2, stretch: 1.2, doze: 0.65 };
+      weight *= cheerful[habit.state] ?? 1;
+    }
+  }
+  if (Number.isFinite(hunger) && hunger < 35) {
+    const hungry = { sniff: 2.2, curious: 1.3, play: 0.6, walk: 0.7 };
+    weight *= hungry[habit.state] ?? 1;
+  }
+  if (Number.isFinite(hygiene) && hygiene < 35 && habit.state === 'groom') weight *= 1.8;
+
+  return Math.max(0.15, weight);
+}
+
+export function chooseAutonomousHabit(random = Math.random, previousState = null, pet = null) {
   const choices = previousState
     ? AUTONOMOUS_HABITS.filter((habit) => habit.state !== previousState)
     : AUTONOMOUS_HABITS;
-  const index = Math.min(choices.length - 1, Math.floor(random() * choices.length));
-  return { ...choices[index] };
+  const weighted = choices.map((habit) => ({ habit, weight: habitWeight(habit, pet) }));
+  const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+  const sample = Number(random());
+  let cursor = (Number.isFinite(sample) ? Math.max(0, Math.min(0.999999, sample)) : 0) * total;
+  for (const entry of weighted) {
+    cursor -= entry.weight;
+    if (cursor < 0) return { ...entry.habit };
+  }
+  return { ...weighted[weighted.length - 1].habit };
 }
 
 export class PonyAnimator {
@@ -53,7 +94,7 @@ export class PonyAnimator {
       else if (pet.energy < 12) this.state = 'sleep';
       else if (this.behaviorElapsed > this.behaviorDuration) {
         this.behaviorElapsed = 0;
-        const habit = chooseAutonomousHabit(Math.random, this.lastHabitState);
+        const habit = chooseAutonomousHabit(Math.random, this.lastHabitState, pet);
         this.lastHabitState = habit.state;
         this.state = habit.state;
         this.behaviorDuration = habit.min + Math.random() * (habit.max - habit.min);
