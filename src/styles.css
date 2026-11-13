@@ -155,3 +155,8 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .memory-mode-list .small-btn { width: 100%; min-height: 38px; font-size: 11px; }
 .memory-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 284px; }
 .memory-grid-4 .memory-card { min-height: 48px; border-radius: 10px; font-size: 20px; }
+
+
+/* Indices de Rosy : contraste doux, sans animation supplémentaire ni surcharge mémoire. */
+.memory-card.hinted { background: linear-gradient(145deg, #fff4d9, #f8e4b6); border-color: #d5a85e; color: #805c2f; box-shadow: 0 0 0 2px #f7e7b6, 0 2px 8px #8a653322; }
+.memory-hint { display: block; width: 100%; min-height: 36px; margin: 0 auto 8px; }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMemoryRound, revealMemoryCard, recordMemoryWin } from '../src/core/memory-game.js';
+import { createMemoryRound, revealMemoryCard, revealMemoryHint, clearMemoryHint, recordMemoryWin } from '../src/core/memory-game.js';
 import { newGame, advanceDay } from '../src/core/game.js';
 
 const date = new Date('2026-11-11T12:00:00');
@@ -113,4 +113,43 @@ test('daily reward is granted once and resets with the local day', () => {
   const nextDay = recordMemoryWin(game.daily, (reward) => awards.push(reward));
   assert.equal(nextDay.rewarded, true);
   assert.equal(awards.length, 2);
+});
+
+test('Rosy hint reveals one intact pair without adding a move', () => {
+  const round = createMemoryRound(() => 0, 4);
+  const hint = revealMemoryHint(round, () => 0);
+  assert.equal(hint.result, 'hint');
+  assert.equal(hint.round.hintsUsed, 1);
+  assert.equal(hint.round.moves, 0);
+  assert.equal(hint.round.firstCard, null);
+  assert.equal(hint.round.hintedPair.length, 2);
+  const [first, second] = hint.round.hintedPair;
+  assert.equal(hint.round.cards[first].symbol, hint.round.cards[second].symbol);
+  assert.deepEqual(clearMemoryHint(hint.round).hintedPair, []);
+});
+
+test('Rosy hints are unavailable during a turn and stop after two per round', () => {
+  let round = createMemoryRound(() => 0, 4);
+  round = revealMemoryCard(round, 0).round;
+  assert.equal(revealMemoryHint(round, () => 0).result, 'ignored');
+  round = createMemoryRound(() => 0, 4);
+  for (let use = 0; use < 2; use++) {
+    const hint = revealMemoryHint(round, () => 0);
+    assert.equal(hint.result, 'hint');
+    round = clearMemoryHint(hint.round);
+  }
+  assert.equal(round.hintsUsed, 2);
+  assert.equal(revealMemoryHint(round, () => 0).result, 'ignored');
+});
+
+test('choosing a flower shown by Rosy consumes the hint and starts a normal turn', () => {
+  const round = createMemoryRound(() => 0, 4);
+  const hint = revealMemoryHint(round, () => 0);
+  const chosen = hint.round.hintedPair[0];
+  const step = revealMemoryCard(hint.round, chosen);
+  assert.equal(step.result, 'first');
+  assert.equal(step.round.firstCard, chosen);
+  assert.equal(step.round.cards[chosen].revealed, true);
+  assert.deepEqual(step.round.hintedPair, []);
+  assert.equal(step.round.moves, 0);
 });
