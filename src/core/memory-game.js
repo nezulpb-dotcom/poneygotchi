@@ -14,7 +14,7 @@ export function createMemoryRound(random = Math.random, requestedPairCount = DEF
     const j = Math.floor(safeSample * (i + 1));
     [cards[i], cards[j]] = [cards[j], cards[i]];
   }
-  return { cards, pairCount, firstCard: null, pendingHide: [], moves: 0, matches: 0, finished: false };
+  return { cards, pairCount, firstCard: null, pendingHide: [], moves: 0, matches: 0, hintsUsed: 0, hintedPair: [], finished: false };
 }
 
 export function revealMemoryCard(round, index) {
@@ -31,7 +31,7 @@ export function revealMemoryCard(round, index) {
     return { round: { ...round, cards, firstCard, pendingHide }, result: 'ignored' };
   }
   cards[index].revealed = true;
-  if (firstCard === null) return { round: { ...round, cards, firstCard: index, pendingHide }, result: 'first' };
+  if (firstCard === null) return { round: { ...round, cards, firstCard: index, pendingHide, hintedPair: [] }, result: 'first' };
   const moves = round.moves + 1;
   if (cards[firstCard].symbol === cards[index].symbol) {
     cards[firstCard].matched = true;
@@ -39,9 +39,39 @@ export function revealMemoryCard(round, index) {
     const matches = round.matches + 1;
     const pairCount = Number.isInteger(round.pairCount) ? round.pairCount : DEFAULT_PAIR_COUNT;
     const finished = matches === pairCount;
-    return { round: { ...round, cards, firstCard: null, pendingHide: [], moves, matches, finished }, result: finished ? 'complete' : 'match' };
+    return { round: { ...round, cards, firstCard: null, pendingHide: [], moves, matches, hintedPair: [], finished }, result: finished ? 'complete' : 'match' };
   }
-  return { round: { ...round, cards, firstCard: null, pendingHide: [firstCard, index], moves }, result: 'mismatch' };
+  return { round: { ...round, cards, firstCard: null, pendingHide: [firstCard, index], moves, hintedPair: [] }, result: 'mismatch' };
+}
+
+const MAX_HINTS_PER_ROUND = 2;
+
+export function revealMemoryHint(round, random = Math.random) {
+  if (!round || round.finished || (round.hintsUsed || 0) >= MAX_HINTS_PER_ROUND
+    || round.firstCard !== null || round.pendingHide.length > 0 || round.hintedPair?.length) {
+    return { round, result: 'ignored' };
+  }
+  const bySymbol = new Map();
+  round.cards.forEach((card, index) => {
+    if (card.matched || card.revealed) return;
+    const indices = bySymbol.get(card.symbol) || [];
+    indices.push(index);
+    bySymbol.set(card.symbol, indices);
+  });
+  const pairs = [...bySymbol.values()].filter((indices) => indices.length === 2);
+  if (!pairs.length) return { round, result: 'ignored' };
+  const sample = Number(random());
+  const safeSample = Number.isFinite(sample) ? Math.max(0, Math.min(0.999999, sample)) : 0;
+  const hintedPair = pairs[Math.floor(safeSample * pairs.length)];
+  return {
+    round: { ...round, hintsUsed: (round.hintsUsed || 0) + 1, hintedPair: [...hintedPair] },
+    result: 'hint',
+  };
+}
+
+export function clearMemoryHint(round) {
+  if (!round || !round.hintedPair?.length) return round;
+  return { ...round, hintedPair: [] };
 }
 
 export function recordMemoryWin(daily, award) {

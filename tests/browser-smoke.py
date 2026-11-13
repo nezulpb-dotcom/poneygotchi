@@ -58,11 +58,31 @@ with sync_playwright() as pw:
     assert page.locator('.memory-grid-4').count() == 1
     assert page.locator('.memory-grid-4').get_attribute('aria-label') == 'Cartes du jardin de mémoire, 4 paires'
     assert page.locator('[role="status"][aria-live="polite"]').count() == 1
-    first_card = page.locator('[data-memory-card]').nth(0)
-    assert first_card.inner_text() == '✧'
-    first_card.click()
-    assert first_card.inner_text() != '✧'
-    assert 'Paires : 0/4' in page.locator('#sheetContent').inner_text()
+    hint_button = page.locator('[data-memory-hint]')
+    assert hint_button.is_enabled()
+    hint_button.click()
+    hinted_cards = page.locator('.memory-card.hinted')
+    assert hinted_cards.count() == 2
+    first_hint_index = int(hinted_cards.nth(0).get_attribute('data-memory-card'))
+    second_hint_index = int(hinted_cards.nth(1).get_attribute('data-memory-card'))
+    assert hinted_cards.nth(0).inner_text() == hinted_cards.nth(1).inner_text()
+    hinted_cards.nth(0).click()
+    assert page.locator('.memory-card.hinted').count() == 0
+    assert page.locator(f'[data-memory-card="{first_hint_index}"]').get_attribute('aria-pressed') == 'true'
+    page.locator(f'[data-memory-card="{second_hint_index}"]').click()
+    assert 'Paires : 1/4' in page.locator('#sheetContent').inner_text()
+    assert 'Coups : 1' in page.locator('#sheetContent').inner_text()
+    assert 'Deux fleurs pareilles' in page.locator('#bubble').inner_text()
+    assert '1 indice' in page.locator('[data-memory-hint]').inner_text()
+    page.set_viewport_size({'width': 320, 'height': 480})
+    screen_box = page.locator('#screen').bounding_box()
+    assert screen_box['x'] == 0 and screen_box['y'] == 0
+    assert screen_box['width'] == 320 and screen_box['height'] == 480
+    assert not page.locator('.top-label').is_visible()
+    assert not page.locator('.under-note').is_visible()
+    assert page.locator('.memory-grid-4').is_visible()
+    hint_box = page.locator('[data-memory-hint]').bounding_box()
+    assert hint_box['y'] + hint_box['height'] <= 480
     assert not errors, errors
     print('Browser smoke tests OK; no uncaught JS errors')
     browser.close()

@@ -60,24 +60,35 @@ export function renderPanel(tab, game, memoryRound = null) {
           <p class="panel-small">${rewardNote}</p>`;
       }
       const pairCount = memoryRound.pairCount === 4 ? 4 : 3;
+      const hintsRemaining = Math.max(0, 2 - (memoryRound.hintsUsed || 0));
+      const hintDisabled = memoryRound.finished || hintsRemaining === 0 || memoryRound.firstCard !== null
+        || memoryRound.pendingHide.length > 0 || Boolean(memoryRound.hintedPair?.length);
       const cards = memoryRound.cards.map((card, index) => {
-        const visible = card.revealed || card.matched;
-        const label = visible ? `Carte ${index + 1} : ${card.symbol}` : `Retourner la carte ${index + 1}`;
-        return `<button class="memory-card${card.matched ? ' matched' : ''}" data-memory-card="${index}" aria-label="${label}" aria-pressed="${visible}" ${card.matched ? 'disabled' : ''}>${visible ? card.symbol : '✧'}</button>`;
+        const hinted = memoryRound.hintedPair?.includes(index) || false;
+        const visible = card.revealed || card.matched || hinted;
+        const label = hinted && !card.revealed && !card.matched
+          ? `Indice de Rosy : carte ${index + 1}, ${card.symbol}`
+          : visible ? `Carte ${index + 1} : ${card.symbol}` : `Retourner la carte ${index + 1}`;
+        const pressed = card.revealed || card.matched;
+        return `<button class="memory-card${card.matched ? ' matched' : ''}${hinted ? ' hinted' : ''}" data-memory-card="${index}" aria-label="${label}" aria-pressed="${pressed}" ${card.matched ? 'disabled' : ''}>${visible ? card.symbol : '✧'}</button>`;
       }).join('');
       const status = memoryRound.finished
         ? 'Toutes les fleurs sont réunies ! Rosy est ravie.'
         : memoryRound.pendingHide.length
           ? 'Ces deux fleurs sont différentes. Touche une autre carte pour continuer.'
+          : memoryRound.hintedPair?.length
+            ? 'Rosy te montre deux fleurs : observe-les avant de continuer.'
           : memoryRound.firstCard !== null
             ? 'Jolie trouvaille ! Cherche la fleur jumelle.'
             : 'Retourne deux cartes pour retrouver une paire.';
       const modeName = pairCount === 4 ? 'Prairie fleurie' : 'Jardin doux';
       return `<p class="panel-sub">${modeName} : ${pairCount} paires de fleurs, à ton rythme.</p>
         <div class="memory-grid${pairCount === 4 ? ' memory-grid-4' : ''}" role="group" aria-label="Cartes du jardin de mémoire, ${pairCount} paires">${cards}</div>
+        <button class="small-btn memory-hint" data-memory-hint ${hintDisabled ? 'disabled' : ''}>✧ Aide de Rosy · ${hintsRemaining} indice${hintsRemaining === 1 ? '' : 's'} restant${hintsRemaining === 1 ? '' : 's'}</button>
         <p class="panel-small" role="status" aria-live="polite" aria-atomic="true">${status}</p>
         <p class="panel-small">Paires : ${memoryRound.matches}/${pairCount} · Coups : ${memoryRound.moves}</p>
         <p class="panel-small">${rewardNote}</p>
+        <p class="panel-small">Deux indices maximum par partie ; ils ne comptent pas comme des coups et ne changent pas la récompense.</p>
         ${memoryRound.finished ? '<button class="small-btn" data-memory-start="3">Rejouer au jardin doux</button><button class="small-btn" data-memory-start="4">Rejouer à la prairie fleurie</button>' : ''}`;
     }
     case 'settings':
