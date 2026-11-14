@@ -1,6 +1,7 @@
 import { loadGame, saveGame } from './core/storage.js';
 import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp } from './core/game.js';
 import { createMemoryRound, revealMemoryCard, revealMemoryHint, clearMemoryHint, recordMemoryWin } from './core/memory-game.js';
+import { memoryReaction } from './core/memory-reactions.js';
 import { createPettingState, petRosy } from './core/petting.js';
 import { PonyAnimator } from './graphics/pony.js';
 import { renderMiniStats, renderPanel } from './ui/panels.js';
@@ -32,6 +33,14 @@ function say(message) {
   $('bubble').classList.add('visible');
   clearTimeout(bubbleTimer);
   bubbleTimer = setTimeout(() => $('bubble').classList.remove('visible'), 2400);
+}
+function reactToMemory(result, variant = 0, suffix = '') {
+  const reaction = memoryReaction(result, game.pet, variant);
+  if (!reaction) return;
+  pony.pet(reaction.pose, reaction.duration);
+  const message = reaction.message + suffix;
+  $('statusPetal').textContent = message;
+  say(message);
 }
 function hideHud() {
   hudOpen = false;
@@ -202,8 +211,7 @@ $('sheetContent').addEventListener('click', (e) => {
     const result = revealMemoryHint(memoryRound);
     if (result.result === 'hint') {
       memoryRound = result.round;
-      pony.pet('look', 1500);
-      say('Rosy te montre deux fleurs… ♡');
+      reactToMemory('hint', memoryRound.hintsUsed);
       drawPanel(true);
       clearTimeout(memoryHintTimer);
       memoryHintTimer = setTimeout(() => {
@@ -217,16 +225,11 @@ $('sheetContent').addEventListener('click', (e) => {
     clearTimeout(memoryHintTimer);
     const result = revealMemoryCard(memoryRound, Number(button.dataset.memoryCard));
     memoryRound = result.round;
-    if (result.result === 'match') {
-      pony.pet('happy', 1100);
-      say('Deux fleurs pareilles ! Rosy est ravie. 🌸');
-    } else if (result.result === 'mismatch') {
-      pony.pet('look', 1000);
-      say('Hmm… pas les mêmes ! Rosy cherche encore. ♡');
+    if (result.result === 'match' || result.result === 'mismatch') {
+      reactToMemory(result.result, memoryRound.moves - 1);
     } else if (result.result === 'complete') {
-      pony.pet('play', 2400);
       const payout = recordMemoryWin(game.daily, (reward) => grant(game, reward));
-      say(payout.rewarded ? '🌸 Bravo ! +12 étoiles et +15 XP.' : '🌸 Toutes les fleurs sont réunies !');
+      reactToMemory('complete', memoryRound.moves, payout.rewarded ? ' +12 étoiles et +15 XP.' : '');
       save();
     }
     drawPanel(true);
