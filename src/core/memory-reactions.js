@@ -1,5 +1,7 @@
 const readNeed = (pet, key) => {
-  const value = Number(pet?.[key]);
+  const raw = pet?.[key];
+  if (raw === null || raw === undefined || raw === '') return 50;
+  const value = Number(raw);
   return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 50;
 };
 
@@ -27,9 +29,7 @@ export function memoryReaction(result, pet = {}, variant = 0) {
   const happiness = readNeed(pet, 'happiness');
 
   if (result === 'hint') {
-    return energy < 25
-      ? { pose: 'look', duration: 1500, message: 'Rosy te montre doucement deux fleurs… ♡' }
-      : { pose: 'look', duration: 1500, message: 'Rosy te montre deux fleurs… ♡' };
+    return { pose: 'look', duration: 1500, message: 'Rosy te montre deux fleurs… ♡' };
   }
 
   if (result === 'match') {
