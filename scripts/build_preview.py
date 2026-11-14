@@ -13,6 +13,7 @@ modules=[
  'src/graphics/pony.js',
  'src/ui/panels.js',
  'src/core/memory-game.js',
+ 'src/core/memory-reactions.js',
  'src/core/petting.js',
  'src/main.js',
 ]
