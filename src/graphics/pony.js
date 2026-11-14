@@ -84,7 +84,16 @@ export class PonyAnimator {
       this.loaded.set(`${state}_${i}`, img);
     }
   }
-  action(pose, ms = 2400) { this.state = pose; this.actionUntil = performance.now() + ms; this.frame = 0; this.elapsed = 0; this.behaviorElapsed = 0; }
+  action(pose, ms = 2400) {
+    this.state = pose;
+    this.actionUntil = performance.now() + ms;
+    this.frame = 0;
+    this.elapsed = 0;
+    this.behaviorElapsed = 0;
+    // An interaction cancels a pending blink and gives Rosy a calm pause afterward.
+    this.blinkRemaining = 0;
+    this.blinkIn = Math.max(this.blinkIn, 3.5);
+  }
   pet(pose = 'happy', ms = 1400) { this.action(pose, ms); }
   update(dt, now, pet) {
     const reduced = this.reducedMotion.matches;
@@ -110,9 +119,13 @@ export class PonyAnimator {
       }
     }
     const canBlink = !reduced && now >= this.actionUntil && ['idle', 'look', 'curious'].includes(this.state);
+    if (this.blinkRemaining > 0) {
+      this.blinkRemaining = Math.max(0, this.blinkRemaining - dt);
+      // Never resume half a blink after a walk, reaction, sleep, or reduced-motion change.
+      if (!canBlink) this.blinkRemaining = 0;
+    }
     if (canBlink) {
       this.blinkIn -= dt;
-      if (this.blinkRemaining > 0) this.blinkRemaining = Math.max(0, this.blinkRemaining - dt);
       if (this.blinkIn <= 0 && this.blinkRemaining === 0) {
         this.blinkRemaining = .32;
         this.blinkIn = 4.5 + Math.random() * 2.5;

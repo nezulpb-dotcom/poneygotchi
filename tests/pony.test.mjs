@@ -114,3 +114,35 @@ test('weighted habit selection remains safe for invalid random values and avoids
  assert.equal(chooseAutonomousHabit(() => Number.NaN, null, tired).state, 'sniff');
  assert.notEqual(chooseAutonomousHabit(() => 0, 'sniff', tired).state, 'sniff');
 });
+
+test('a blink is cancelled when Rosy leaves a calm pose and never resumes later', () => {
+ const pony = animator(); pony.state = 'curious'; pony.blinkIn = .01;
+ pony.update(.01, 100, healthy);
+ assert.match(pony.el.src, /blink_/);
+ assert.equal(pony.blinkRemaining, .32);
+
+ pony.state = 'walk';
+ pony.update(.1, 200, healthy);
+ assert.equal(pony.blinkRemaining, 0);
+ assert.match(pony.el.src, /walk_/);
+
+ pony.state = 'idle';
+ pony.update(.1, 300, healthy);
+ assert.match(pony.el.src, /idle_/);
+});
+
+test('a user interaction cancels a blink and leaves a quiet pause before the next one', () => {
+ const pony = animator(); pony.state = 'curious'; pony.blinkIn = .1; pony.blinkRemaining = .2;
+ pony.pet();
+ assert.equal(pony.blinkRemaining, 0);
+ assert.ok(pony.blinkIn >= 3.5);
+
+ pony.actionUntil = 0;
+ pony.state = 'idle';
+ pony.behaviorDuration = 100;
+ pony.behaviorElapsed = 0;
+ pony.update(3.4, 10000, healthy);
+ assert.match(pony.el.src, /idle_/);
+ pony.update(.2, 10200, healthy);
+ assert.match(pony.el.src, /blink_/);
+});
