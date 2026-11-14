@@ -123,6 +123,70 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
  .landscape, .bubble { transition: none; }
 }
 
+/* Mini-jeu de mémoire : une feuille secondaire compacte, sans toucher au lockscreen. */
+.memory-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 250px; margin: 12px auto; }
+.memory-card { min-height: 52px; border: 1px solid #d9c1df; border-radius: 13px; background: linear-gradient(145deg, #fffaff, #f0e5f5); color: #75577f; font-size: 23px; box-shadow: 0 2px 7px #74547d22; }
+.memory-card[aria-pressed="true"] { background: #fff8e9; border-color: #e7c98f; }
+.memory-card.matched { background: #e9f3df; border-color: #b8d3a6; color: #55764d; cursor: default; }
+.memory-card:disabled { opacity: 1; }
+
+
+/* Caresses tactiles : la zone touchée fait réagir Rosy et libère un petit cœur. */
+.pet-tap { padding: 0; }
+.pet-tap::after {
+  content: '♡';
+  position: absolute;
+  left: var(--pet-x, 50%);
+  top: var(--pet-y, 42%);
+  color: #ffd8ef;
+  font-size: 30px;
+  line-height: 1;
+  text-shadow: 0 2px 8px #77517f, 0 0 10px #fff8;
+  opacity: 0;
+  pointer-events: none;
+}
+.pet-tap[data-zone="forehead"]::after { color: #fff0b8; }
+.pet-tap[data-zone="mane"]::after { color: #e8d9ff; }
+.pet-tap.pet-burst::after { animation: pet-heart-pop .78s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes pet-heart-pop {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(.35); }
+  18% { opacity: 1; transform: translate(-50%, -5px) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -35px) scale(.8); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .pet-tap.pet-burst::after { animation: none; opacity: .9; transform: translate(-50%, -5px); }
+}
+
+
+/* Deux formats de jeu adaptés à la feuille 320 × 480. */
+.memory-mode-list { display: grid; gap: 7px; margin: 10px 0; }
+.memory-mode-list .small-btn { width: 100%; min-height: 38px; font-size: 11px; }
+.memory-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 284px; }
+.memory-grid-4 .memory-card { min-height: 48px; border-radius: 10px; font-size: 20px; }
+
+
+/* Indices de Rosy : contraste doux, sans animation supplémentaire ni surcharge mémoire. */
+.memory-card.hinted { background: linear-gradient(145deg, #fff4d9, #f8e4b6); border-color: #d5a85e; color: #805c2f; box-shadow: 0 0 0 2px #f7e7b6, 0 2px 8px #8a653322; }
+.memory-hint { display: block; width: 100%; min-height: 36px; margin: 0 auto 8px; }
+
+
+/* Le CrowPanel 320 × 480 utilise toute la dalle, sans cadre ni marges de démonstration. */
+@media (max-width: 340px) and (max-height: 520px) {
+  body { place-items: start center; }
+  .app-shell { width: 320px; height: 480px; padding: 0; gap: 0; }
+  .top-label, .under-note { display: none; }
+  .phone { width: 320px; height: 480px; max-width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .bottom-sheet { padding: 8px 10px 12px; }
+  .sheet-handle { margin-bottom: 7px; }
+  .sheet-tabs { margin: 7px 0; }
+  .panel-sub { margin: 6px 0; }
+  .memory-grid { margin: 7px auto; gap: 5px; }
+  .memory-grid-4 { gap: 4px; }
+  .memory-grid-4 .memory-card { min-height: 40px; font-size: 18px; }
+  .memory-hint { min-height: 32px; margin-bottom: 4px; }
+  .panel-small { margin: 5px 0; font-size: 9px; }
+}
+
 </style>
 </head>
 <body>
@@ -166,6 +230,7 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
             <button data-tab="missions" class="active">Quêtes</button>
             <button data-tab="shop">Atelier</button>
             <button data-tab="levels">Niveau</button>
+            <button data-tab="memory">Mémoire</button>
             <button data-tab="settings">Réglages</button>
           </nav>
           <div id="sheetContent" class="sheet-content"></div>
@@ -194,7 +259,7 @@ const localDateKey = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 function emptyDay(date = new Date()) {
-  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false };
+  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false };
 }
 
 function newGame(date = new Date()) {
@@ -351,19 +416,84 @@ function saveGame(game, storage) {
 }
 
 const STATES = ['idle', 'walk', 'blink', 'happy', 'eat', 'sleep', 'sad', 'wash'];
+
+const AUTONOMOUS_HABITS = [
+  { state: 'sniff', message: 'Rosy renifle une petite touffe d’herbe…', speak: true, min: 4.5, max: 7 },
+  { state: 'curious', message: 'Oh ? Quelque chose a bougé dans les fleurs !', speak: true, min: 3.5, max: 6 },
+  { state: 'stretch', message: 'Rosy s’étire avec un petit frisson de bonheur.', speak: false, min: 4, max: 6 },
+  { state: 'groom', message: 'Rosy remet doucement sa crinière en place.', speak: false, min: 4, max: 6.5 },
+  { state: 'doze', message: 'Une toute petite pause les yeux fermés…', speak: true, min: 3.5, max: 5.5 },
+  { state: 'walk', message: 'Rosy part explorer un autre coin de la prairie.', speak: false, min: 5, max: 8 },
+  { state: 'idle', message: 'Rosy profite tranquillement du paysage.', speak: false, min: 4.5, max: 7 },
+  { state: 'play', message: 'Rosy fait un petit pas de danse !', speak: true, min: 3.5, max: 5.5 },
+];
+
+function habitWeight(habit, pet) {
+  let weight = 1;
+  const energy = Number(pet?.energy);
+  const happiness = Number(pet?.happiness);
+  const hunger = Number(pet?.hunger);
+  const hygiene = Number(pet?.hygiene);
+
+  if (Number.isFinite(energy)) {
+    if (energy < 35) {
+      const tired = { doze: 3.4, idle: 1.6, groom: 1.4, stretch: 1.3, walk: 0.35, play: 0.25 };
+      weight *= tired[habit.state] ?? 1;
+    } else if (energy > 70) {
+      const lively = { play: 1.8, walk: 1.6, curious: 1.3, stretch: 1.3, doze: 0.45, idle: 0.75 };
+      weight *= lively[habit.state] ?? 1;
+    }
+  }
+  if (Number.isFinite(happiness)) {
+    if (happiness < 35) {
+      const gentle = { curious: 1.5, sniff: 1.4, groom: 1.1, play: 0.55, walk: 0.75 };
+      weight *= gentle[habit.state] ?? 1;
+    } else if (happiness > 75) {
+      const cheerful = { play: 1.5, walk: 1.25, curious: 1.2, stretch: 1.2, doze: 0.65 };
+      weight *= cheerful[habit.state] ?? 1;
+    }
+  }
+  if (Number.isFinite(hunger) && hunger < 35) {
+    const hungry = { sniff: 2.2, curious: 1.3, play: 0.6, walk: 0.7 };
+    weight *= hungry[habit.state] ?? 1;
+  }
+  if (Number.isFinite(hygiene) && hygiene < 35 && habit.state === 'groom') weight *= 1.8;
+
+  return Math.max(0.15, weight);
+}
+
+function chooseAutonomousHabit(random = Math.random, previousState = null, pet = null) {
+  const choices = previousState
+    ? AUTONOMOUS_HABITS.filter((habit) => habit.state !== previousState)
+    : AUTONOMOUS_HABITS;
+  const weighted = choices.map((habit) => ({ habit, weight: habitWeight(habit, pet) }));
+  const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+  const sample = Number(random());
+  let cursor = (Number.isFinite(sample) ? Math.max(0, Math.min(0.999999, sample)) : 0) * total;
+  for (const entry of weighted) {
+    cursor -= entry.weight;
+    if (cursor < 0) return { ...entry.habit };
+  }
+  return { ...weighted[weighted.length - 1].habit };
+}
+
 class PonyAnimator {
-  constructor(el) {
+  constructor(el, onHabit = null) {
     this.el = el;
     this.wrap = el.closest('.pony-wrap');
+    this.onHabit = onHabit;
+    this.lastHabitState = null;
     this.state = 'idle';
     this.direction = 1;
     this.x = 90;
     this.elapsed = 0;
     this.behaviorElapsed = 0;
+    this.blinkIn = 5 + Math.random() * 2.5;
+    this.blinkRemaining = 0;
     this.frame = 0;
     this.actionUntil = 0;
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    this.behaviorDuration = 3;
+    this.behaviorDuration = 5;
     this.loaded = new Map();
     for (const state of STATES) for (let i = 0; i < 4; i++) {
       const img = new Image();
@@ -372,21 +502,23 @@ class PonyAnimator {
     }
   }
   action(pose, ms = 2400) { this.state = pose; this.actionUntil = performance.now() + ms; this.frame = 0; this.elapsed = 0; this.behaviorElapsed = 0; }
-  pet() { this.action('happy', 1400); }
+  pet(pose = 'happy', ms = 1400) { this.action(pose, ms); }
   update(dt, now, pet) {
     const reduced = this.reducedMotion.matches;
     this.elapsed += dt;
     this.behaviorElapsed += dt;
-    if (this.elapsed >= (this.state === 'sleep' ? .65 : .24)) { this.elapsed = 0; this.frame = (this.frame + 1) % 4; }
+    if (this.elapsed >= (this.state === 'sleep' || this.state === 'doze' ? .8 : .3)) { this.elapsed = 0; this.frame = (this.frame + 1) % 4; }
     if (now > this.actionUntil) {
       if (pet.hunger < 15 || pet.happiness < 15 || pet.hygiene < 10) this.state = 'sad';
       else if (pet.energy < 12) this.state = 'sleep';
       else if (this.behaviorElapsed > this.behaviorDuration) {
         this.behaviorElapsed = 0;
-        const r = Math.random();
-        this.state = r < .42 ? 'walk' : r < .66 ? 'idle' : r < .84 ? 'look' : 'play';
-        this.behaviorDuration = this.state === 'walk' ? 3 + Math.random() * 3 : 2 + Math.random() * 2;
-        if (Math.random() < .45) this.direction *= -1;
+        const habit = chooseAutonomousHabit(Math.random, this.lastHabitState, pet);
+        this.lastHabitState = habit.state;
+        this.state = habit.state;
+        this.behaviorDuration = habit.min + Math.random() * (habit.max - habit.min);
+        if (habit.state === 'walk' || Math.random() < .45) this.direction *= -1;
+        if (this.onHabit) this.onHabit(habit);
       }
       if (this.state === 'walk' && !reduced) {
         this.x += dt * 14 * this.direction;
@@ -394,13 +526,33 @@ class PonyAnimator {
         if (this.x > 158) { this.x = 158; this.direction = -1; }
       }
     }
-    const pose = this.state === 'look' ? (this.frame === 2 ? 'blink' : 'idle') : this.state === 'play' ? 'happy' : this.state;
+    const canBlink = !reduced && now >= this.actionUntil && ['idle', 'look', 'curious'].includes(this.state);
+    if (canBlink) {
+      this.blinkIn -= dt;
+      if (this.blinkRemaining > 0) this.blinkRemaining = Math.max(0, this.blinkRemaining - dt);
+      if (this.blinkIn <= 0 && this.blinkRemaining === 0) {
+        this.blinkRemaining = .32;
+        this.blinkIn = 4.5 + Math.random() * 2.5;
+      }
+    }
+    const pose = this.state === 'blink' || (canBlink && this.blinkRemaining > 0)
+      ? 'blink'
+      : this.state === 'look' || this.state === 'curious' ? 'idle'
+      : this.state === 'play' || this.state === 'stretch' ? 'happy'
+      : this.state === 'sniff' ? 'eat'
+      : this.state === 'groom' ? 'wash'
+      : this.state === 'doze' ? 'sleep'
+      : this.state;
     const frame = reduced ? 0 : this.frame;
     const img = this.loaded.get(`${pose}_${frame}`);
     this.wrap.dataset.pose = this.state;
-    const bounce = !reduced && (this.state === 'play' || this.state === 'happy') ? -Math.abs(Math.sin(now / 180)) * 12 : !reduced && this.state === 'walk' ? Math.sin(now / 100) * 1.5 : 0;
-    const look = !reduced && this.state === 'look' ? Math.sin(this.behaviorElapsed * 2) * 4 : 0;
-    this.el.style.transform = `translateY(${bounce}px) rotate(${look}deg)`;
+    const bounce = !reduced && (this.state === 'play' || this.state === 'stretch' || this.state === 'happy')
+      ? -Math.abs(Math.sin(now / 180)) * (this.state === 'stretch' ? 5 : 12)
+      : !reduced && this.state === 'walk' ? Math.sin(now / 100) * 1.5 : 0;
+    const tilt = !reduced && (this.state === 'look' || this.state === 'curious') ? Math.sin(this.behaviorElapsed * 2) * 4 : 0;
+    const sniff = !reduced && this.state === 'sniff' ? Math.max(0, Math.sin(now / 170)) * 5 : 0;
+    const doze = !reduced && this.state === 'doze' ? Math.sin(now / 520) * 1.5 : 0;
+    this.el.style.transform = `translateY(${bounce + sniff + doze}px) rotate(${tilt}deg)`;
     const hit = document.getElementById('petTap');
     if (hit) { hit.style.left = `${this.x}px`; hit.style.top = `${this.wrap.offsetTop}px`; hit.style.width = '144px'; hit.style.height = '144px'; }
     if (img && this.el.src !== img.src) this.el.src = img.src;
@@ -427,7 +579,7 @@ function renderMiniStats(pet) {
 const questButton = (type, done, label = 'Noter') =>
   `<button class="small-btn" data-quest="${type}" ${done ? 'disabled' : ''}>${done ? '✓ Noté' : label}</button>`;
 
-function renderPanel(tab, game) {
+function renderPanel(tab, game, memoryRound = null) {
   const { pet, daily } = game;
   switch (tab) {
     case 'missions': {
@@ -457,6 +609,50 @@ function renderPanel(tab, game) {
         <p class="panel-small">Chaque niveau donne 15 étoiles ✧ et ouvre progressivement des accessoires.</p>
         <div class="panel-kicker">Besoins de Rosy</div>
         ${[['💗 Bonheur',pet.happiness],['🍎 Faim',pet.hunger],['⚡ Énergie',pet.energy],['💧 Propreté',pet.hygiene]].map(([k,v])=>`<div class="task"><span>${k}</span><b>${Math.round(v)}%</b></div>`).join('')}`;
+    case 'memory': {
+      const rewardNote = game.daily.memoryRewarded
+        ? 'La petite récompense du jour est déjà obtenue ; tu peux rejouer pour le plaisir.'
+        : 'Première victoire du jour : +12 étoiles et +15 XP.';
+      if (!memoryRound) {
+        return `<p class="panel-sub">Choisis ton petit défi floral. Aucun chronomètre : Rosy t’attend tranquillement.</p>
+          <div class="memory-mode-list">
+            <button class="small-btn" data-memory-start="3">Jardin doux · 3 paires</button>
+            <button class="small-btn" data-memory-start="4">Prairie fleurie · 4 paires</button>
+          </div>
+          <p class="panel-small">${rewardNote}</p>`;
+      }
+      const pairCount = memoryRound.pairCount === 4 ? 4 : 3;
+      const hintsRemaining = Math.max(0, 2 - (memoryRound.hintsUsed || 0));
+      const hintDisabled = memoryRound.finished || hintsRemaining === 0 || memoryRound.firstCard !== null
+        || memoryRound.pendingHide.length > 0 || Boolean(memoryRound.hintedPair?.length);
+      const cards = memoryRound.cards.map((card, index) => {
+        const hinted = memoryRound.hintedPair?.includes(index) || false;
+        const visible = card.revealed || card.matched || hinted;
+        const label = hinted && !card.revealed && !card.matched
+          ? `Indice de Rosy : carte ${index + 1}, ${card.symbol}`
+          : visible ? `Carte ${index + 1} : ${card.symbol}` : `Retourner la carte ${index + 1}`;
+        const pressed = card.revealed || card.matched;
+        return `<button class="memory-card${card.matched ? ' matched' : ''}${hinted ? ' hinted' : ''}" data-memory-card="${index}" aria-label="${label}" aria-pressed="${pressed}" ${card.matched ? 'disabled' : ''}>${visible ? card.symbol : '✧'}</button>`;
+      }).join('');
+      const status = memoryRound.finished
+        ? 'Toutes les fleurs sont réunies ! Rosy est ravie.'
+        : memoryRound.pendingHide.length
+          ? 'Ces deux fleurs sont différentes. Touche une autre carte pour continuer.'
+          : memoryRound.hintedPair?.length
+            ? 'Rosy te montre deux fleurs : observe-les avant de continuer.'
+          : memoryRound.firstCard !== null
+            ? 'Jolie trouvaille ! Cherche la fleur jumelle.'
+            : 'Retourne deux cartes pour retrouver une paire.';
+      const modeName = pairCount === 4 ? 'Prairie fleurie' : 'Jardin doux';
+      return `<p class="panel-sub">${modeName} : ${pairCount} paires de fleurs, à ton rythme.</p>
+        <div class="memory-grid${pairCount === 4 ? ' memory-grid-4' : ''}" role="group" aria-label="Cartes du jardin de mémoire, ${pairCount} paires">${cards}</div>
+        <button class="small-btn memory-hint" data-memory-hint ${hintDisabled ? 'disabled' : ''}>✧ Aide de Rosy · ${hintsRemaining} indice${hintsRemaining === 1 ? '' : 's'} restant${hintsRemaining === 1 ? '' : 's'}</button>
+        <p class="panel-small" role="status" aria-live="polite" aria-atomic="true">${status}</p>
+        <p class="panel-small">Paires : ${memoryRound.matches}/${pairCount} · Coups : ${memoryRound.moves}</p>
+        <p class="panel-small">${rewardNote}</p>
+        <p class="panel-small">Deux indices maximum par partie ; ils ne comptent pas comme des coups et ne changent pas la récompense.</p>
+        ${memoryRound.finished ? '<button class="small-btn" data-memory-start="3">Rejouer au jardin doux</button><button class="small-btn" data-memory-start="4">Rejouer à la prairie fleurie</button>' : ''}`;
+    }
     case 'settings':
       return `<div class="panel-sub">Les données sont conservées localement dans ton navigateur. Les rappels fonctionnent uniquement tant que la page est ouverte.</div>
         <label class="setting-line">Rappels d’eau (facultatifs) <input id="reminderToggle" type="checkbox" ${game.settings.waterReminder ? 'checked' : ''}></label>
@@ -468,22 +664,235 @@ function renderPanel(tab, game) {
   }
 }
 
+const SYMBOLS = ['🌸', '🌼', '🍀', '🌷'];
+const DEFAULT_PAIR_COUNT = 3;
+const MAX_PAIR_COUNT = 4;
+
+const normalizePairCount = (value) => value === MAX_PAIR_COUNT ? MAX_PAIR_COUNT : DEFAULT_PAIR_COUNT;
+
+function createMemoryRound(random = Math.random, requestedPairCount = DEFAULT_PAIR_COUNT) {
+  const pairCount = normalizePairCount(requestedPairCount);
+  const symbols = SYMBOLS.slice(0, pairCount);
+  const cards = [...symbols, ...symbols].map((symbol, id) => ({ id, symbol, revealed: false, matched: false }));
+  for (let i = cards.length - 1; i > 0; i--) {
+    const sample = Number(random());
+    const safeSample = Number.isFinite(sample) ? Math.max(0, Math.min(0.999999, sample)) : 0;
+    const j = Math.floor(safeSample * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  return { cards, pairCount, firstCard: null, pendingHide: [], moves: 0, matches: 0, hintsUsed: 0, hintedPair: [], finished: false };
+}
+
+function revealMemoryCard(round, index) {
+  if (!round || round.finished || !Number.isInteger(index) || index < 0 || index >= round.cards.length) {
+    return { round, result: 'ignored' };
+  }
+  const cards = round.cards.map((card) => ({ ...card }));
+  for (const pending of round.pendingHide) {
+    if (!cards[pending].matched) cards[pending].revealed = false;
+  }
+  const firstCard = round.pendingHide.length ? null : round.firstCard;
+  const pendingHide = [];
+  if (cards[index].matched || cards[index].revealed) {
+    return { round: { ...round, cards, firstCard, pendingHide }, result: 'ignored' };
+  }
+  cards[index].revealed = true;
+  if (firstCard === null) return { round: { ...round, cards, firstCard: index, pendingHide, hintedPair: [] }, result: 'first' };
+  const moves = round.moves + 1;
+  if (cards[firstCard].symbol === cards[index].symbol) {
+    cards[firstCard].matched = true;
+    cards[index].matched = true;
+    const matches = round.matches + 1;
+    const pairCount = Number.isInteger(round.pairCount) ? round.pairCount : DEFAULT_PAIR_COUNT;
+    const finished = matches === pairCount;
+    return { round: { ...round, cards, firstCard: null, pendingHide: [], moves, matches, hintedPair: [], finished }, result: finished ? 'complete' : 'match' };
+  }
+  return { round: { ...round, cards, firstCard: null, pendingHide: [firstCard, index], moves, hintedPair: [] }, result: 'mismatch' };
+}
+
+const MAX_HINTS_PER_ROUND = 2;
+
+function revealMemoryHint(round, random = Math.random) {
+  if (!round || round.finished || (round.hintsUsed || 0) >= MAX_HINTS_PER_ROUND
+    || round.firstCard !== null || round.pendingHide.length > 0 || round.hintedPair?.length) {
+    return { round, result: 'ignored' };
+  }
+  const bySymbol = new Map();
+  round.cards.forEach((card, index) => {
+    if (card.matched || card.revealed) return;
+    const indices = bySymbol.get(card.symbol) || [];
+    indices.push(index);
+    bySymbol.set(card.symbol, indices);
+  });
+  const pairs = [...bySymbol.values()].filter((indices) => indices.length === 2);
+  if (!pairs.length) return { round, result: 'ignored' };
+  const sample = Number(random());
+  const safeSample = Number.isFinite(sample) ? Math.max(0, Math.min(0.999999, sample)) : 0;
+  const hintedPair = pairs[Math.floor(safeSample * pairs.length)];
+  return {
+    round: { ...round, hintsUsed: (round.hintsUsed || 0) + 1, hintedPair: [...hintedPair] },
+    result: 'hint',
+  };
+}
+
+function clearMemoryHint(round) {
+  if (!round || !round.hintedPair?.length) return round;
+  return { ...round, hintedPair: [] };
+}
+
+function recordMemoryWin(daily, award) {
+  if (daily.memoryRewarded) return { rewarded: false, reward: { stars: 0, xp: 0 } };
+  const reward = { stars: 12, xp: 15 };
+  daily.memoryRewarded = true;
+  award(reward);
+  return { rewarded: true, reward };
+}
+
+const readNeed = (pet, key) => {
+  const raw = pet?.[key];
+  if (raw === null || raw === undefined || raw === '') return 50;
+  const value = Number(raw);
+  return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 50;
+};
+
+const MATCHES = [
+  { pose: 'happy', duration: 1100, message: 'Deux fleurs pareilles ! Rosy est ravie. 🌸' },
+  { pose: 'happy', duration: 1200, message: 'Une jolie paire de plus ! Rosy remue joyeusement les oreilles. 🌼' },
+  { pose: 'happy', duration: 1200, message: 'Bien joué ! Rosy te répond par un petit sourire. ♡' },
+];
+
+const MISMATCHES = [
+  { pose: 'look', duration: 1000, message: 'Hmm… pas les mêmes ! Rosy cherche encore. ♡' },
+  { pose: 'look', duration: 1050, message: 'Presque ! Rosy penche la tête devant ces fleurs.' },
+  { pose: 'look', duration: 1000, message: 'Ces deux fleurs ne vont pas ensemble. On continue ?' },
+];
+
+const choose = (items, variant) => {
+  const value = Number(variant);
+  const index = Number.isFinite(value) ? Math.abs(Math.floor(value)) : 0;
+  return { ...items[index % items.length] };
+};
+
+// Short, mood-aware responses reuse existing poses and never change rewards.
+function memoryReaction(result, pet = {}, variant = 0) {
+  const energy = readNeed(pet, 'energy');
+  const happiness = readNeed(pet, 'happiness');
+
+  if (result === 'hint') {
+    return { pose: 'look', duration: 1500, message: 'Rosy te montre deux fleurs… ♡' };
+  }
+
+  if (result === 'match') {
+    if (energy < 25) return { pose: 'happy', duration: 1000, message: 'Tout doucement… une jolie paire retrouvée. 🌸' };
+    if (happiness < 30) return { pose: 'happy', duration: 1100, message: 'Une paire retrouvée… Rosy se réjouit de ce petit moment avec toi. ♡' };
+    return choose(MATCHES, variant);
+  }
+
+  if (result === 'mismatch') {
+    if (happiness < 30) return { pose: 'look', duration: 1100, message: 'Ce n’est pas grave, Rosy cherche avec toi. ♡' };
+    if (energy < 25) return { pose: 'look', duration: 1000, message: 'On prend notre temps… les fleurs attendent. ♡' };
+    return choose(MISMATCHES, variant);
+  }
+
+  if (result === 'complete') {
+    if (energy < 25) return { pose: 'happy', duration: 1700, message: 'Le jardin est terminé… Rosy sourit tout doucement. 🌸' };
+    if (happiness < 30) return { pose: 'happy', duration: 2100, message: 'Tu as réussi ! Rosy est fière de ce joli moment avec toi. ♡' };
+    return { pose: 'play', duration: 2400, message: 'Toutes les fleurs sont réunies ! Rosy danse de joie. ✨' };
+  }
+
+  return null;
+}
+
+const COOLDOWN_MS = 420;
+const COMBO_WINDOW_MS = 1800;
+
+const ZONES = [
+  {
+    id: 'forehead',
+    pose: 'look',
+    message: 'Rosy penche la tête sous les gratouilles du front…',
+    repeatMessage: 'Encore une petite gratouille derrière l’oreille…',
+  },
+  {
+    id: 'cheek',
+    pose: 'happy',
+    message: 'Mmm… les caresses sur la joue, elle adore !',
+    repeatMessage: 'Rosy colle doucement sa joue à ta main…',
+  },
+  {
+    id: 'mane',
+    pose: 'groom',
+    message: 'Rosy frissonne de plaisir sous sa crinière…',
+    repeatMessage: 'Sa crinière frétille sous tes doigts…',
+  },
+];
+
+const finitePositive = (value, fallback) =>
+  Number.isFinite(value) && value > 0 ? value : fallback;
+
+function createPettingState() {
+  return { lastAt: -Infinity, lastZone: null, streak: 0 };
+}
+
+function petRosy(state, point = {}, now = 0) {
+  const previous = state && typeof state === 'object' ? state : createPettingState();
+  if (!Number.isFinite(now) || now - previous.lastAt < COOLDOWN_MS) {
+    return { accepted: false, state: previous };
+  }
+
+  const width = finitePositive(point.width, 144);
+  const height = finitePositive(point.height, 144);
+  const x = Math.max(0, Math.min(width, Number.isFinite(point.x) ? point.x : width / 2));
+  const y = Math.max(0, Math.min(height, Number.isFinite(point.y) ? point.y : height / 2));
+  const relativeY = y / height;
+  const zone = relativeY < 0.32 ? ZONES[0] : relativeY < 0.70 ? ZONES[1] : ZONES[2];
+  const inCombo = now - previous.lastAt <= COMBO_WINDOW_MS;
+  const streak = inCombo ? (previous.streak >= 3 ? 1 : previous.streak + 1) : 1;
+  const bonus = streak === 3;
+
+  return {
+    accepted: true,
+    state: { lastAt: now, lastZone: zone.id, streak },
+    zone: zone.id,
+    x,
+    y,
+    happiness: 2,
+    pose: bonus ? 'play' : zone.pose,
+    duration: bonus ? 1850 : 1450,
+    streak,
+    bonus,
+    message: bonus
+      ? 'Trois caresses ! Rosy fait un petit pas de danse ✨'
+      : zone.id === previous.lastZone && inCombo ? zone.repeatMessage : zone.message,
+  };
+}
+
+
+
+
 
 
 
 
 const $ = (id) => document.getElementById(id);
 const game = loadGame();
-const pony = new PonyAnimator($('ponySprite'));
+const pony = new PonyAnimator($('ponySprite'), (habit) => {
+  $('statusPetal').textContent = habit.message;
+  if (habit.speak) say(habit.message);
+});
 let hudOpen = false;
 let panelTab = 'missions';
 let hudHideTimer;
 let bubbleTimer;
 let sceneTimer;
+let petBurstTimer;
 let lastFrame = performance.now();
 let needAccumulator = 0;
 let lastSaved = Date.now();
 let currentScene = '';
+let memoryRound = null;
+let memoryHintTimer;
+let pettingState = createPettingState();
 
 function save() { game.updatedAt = Date.now(); saveGame(game); }
 function refreshStats() { $('miniStats').innerHTML = renderMiniStats(game.pet); }
@@ -492,6 +901,14 @@ function say(message) {
   $('bubble').classList.add('visible');
   clearTimeout(bubbleTimer);
   bubbleTimer = setTimeout(() => $('bubble').classList.remove('visible'), 2400);
+}
+function reactToMemory(result, variant = 0, suffix = '') {
+  const reaction = memoryReaction(result, game.pet, variant);
+  if (!reaction) return;
+  pony.pet(reaction.pose, reaction.duration);
+  const message = reaction.message + suffix;
+  $('statusPetal').textContent = message;
+  say(message);
 }
 function hideHud() {
   hudOpen = false;
@@ -528,7 +945,7 @@ function closePanel() {
 function drawPanel(preserveScroll = false) {
   const box = $('sheetContent');
   const scroll = preserveScroll ? $('sheetWrap').querySelector('.bottom-sheet').scrollTop : 0;
-  box.innerHTML = renderPanel(panelTab, game);
+  box.innerHTML = renderPanel(panelTab, game, memoryRound);
   $('sheetWrap').querySelector('.bottom-sheet').scrollTop = scroll;
   for (const button of document.querySelectorAll('[data-tab]')) button.classList.toggle('active', button.dataset.tab === panelTab);
 }
@@ -610,10 +1027,32 @@ function animate(now) {
 }
 
 $('screenTap').addEventListener('click', () => hudOpen ? hideHud() : showHud());
-$('petTap').addEventListener('click', () => {
-  game.pet.happiness = clamp(game.pet.happiness + 2);
-  pony.pet();
-  say('♡ Rosy adore les caresses !');
+$('petTap').addEventListener('click', (event) => {
+  const button = $('petTap');
+  const bounds = button.getBoundingClientRect();
+  const reaction = petRosy(pettingState, {
+    x: event.clientX - bounds.left,
+    y: event.clientY - bounds.top,
+    width: bounds.width,
+    height: bounds.height,
+  }, performance.now());
+  if (!reaction.accepted) return;
+
+  pettingState = reaction.state;
+  game.pet.happiness = clamp(game.pet.happiness + reaction.happiness);
+  pony.pet(reaction.pose, reaction.duration);
+  $('statusPetal').textContent = reaction.message;
+  say(reaction.message);
+
+  button.dataset.zone = reaction.zone;
+  button.style.setProperty('--pet-x', `${reaction.x}px`);
+  button.style.setProperty('--pet-y', `${reaction.y}px`);
+  button.classList.remove('pet-burst');
+  void button.offsetWidth;
+  button.classList.add('pet-burst');
+  clearTimeout(petBurstTimer);
+  petBurstTimer = setTimeout(() => button.classList.remove('pet-burst'), 800);
+
   showHud();
   save();
 });
@@ -629,6 +1068,41 @@ for (const button of document.querySelectorAll('[data-tab]')) button.addEventLis
 $('sheetContent').addEventListener('click', (e) => {
   const button = e.target.closest('button');
   if (!button) return;
+  if (button.hasAttribute('data-memory-start')) {
+    clearTimeout(memoryHintTimer);
+    const pairCount = Number(button.dataset.memoryStart) === 4 ? 4 : 3;
+    memoryRound = createMemoryRound(Math.random, pairCount);
+    drawPanel();
+    return;
+  }
+  if (button.hasAttribute('data-memory-hint')) {
+    const result = revealMemoryHint(memoryRound);
+    if (result.result === 'hint') {
+      memoryRound = result.round;
+      reactToMemory('hint', memoryRound.hintsUsed);
+      drawPanel(true);
+      clearTimeout(memoryHintTimer);
+      memoryHintTimer = setTimeout(() => {
+        memoryRound = clearMemoryHint(memoryRound);
+        if (panelTab === 'memory' && $('sheetWrap').classList.contains('open')) drawPanel(true);
+      }, 1500);
+    }
+    return;
+  }
+  if (button.hasAttribute('data-memory-card')) {
+    clearTimeout(memoryHintTimer);
+    const result = revealMemoryCard(memoryRound, Number(button.dataset.memoryCard));
+    memoryRound = result.round;
+    if (result.result === 'match' || result.result === 'mismatch') {
+      reactToMemory(result.result, memoryRound.moves - 1);
+    } else if (result.result === 'complete') {
+      const payout = recordMemoryWin(game.daily, (reward) => grant(game, reward));
+      reactToMemory('complete', memoryRound.moves, payout.rewarded ? ' +12 étoiles et +15 XP.' : '');
+      save();
+    }
+    drawPanel(true);
+    return;
+  }
   if (button.dataset.quest) {
     const type = button.dataset.quest;
     const result = completeQuest(game, type);

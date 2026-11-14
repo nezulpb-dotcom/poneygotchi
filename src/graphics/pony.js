@@ -71,6 +71,8 @@ export class PonyAnimator {
     this.x = 90;
     this.elapsed = 0;
     this.behaviorElapsed = 0;
+    this.blinkIn = 5 + Math.random() * 2.5;
+    this.blinkRemaining = 0;
     this.frame = 0;
     this.actionUntil = 0;
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -82,13 +84,22 @@ export class PonyAnimator {
       this.loaded.set(`${state}_${i}`, img);
     }
   }
-  action(pose, ms = 2400) { this.state = pose; this.actionUntil = performance.now() + ms; this.frame = 0; this.elapsed = 0; this.behaviorElapsed = 0; }
+  action(pose, ms = 2400) {
+    this.state = pose;
+    this.actionUntil = performance.now() + ms;
+    this.frame = 0;
+    this.elapsed = 0;
+    this.behaviorElapsed = 0;
+    // An interaction cancels a pending blink and gives Rosy a calm pause afterward.
+    this.blinkRemaining = 0;
+    this.blinkIn = Math.max(this.blinkIn, 3.5);
+  }
   pet(pose = 'happy', ms = 1400) { this.action(pose, ms); }
   update(dt, now, pet) {
     const reduced = this.reducedMotion.matches;
     this.elapsed += dt;
     this.behaviorElapsed += dt;
-    if (this.elapsed >= (this.state === 'sleep' || this.state === 'doze' ? .65 : .24)) { this.elapsed = 0; this.frame = (this.frame + 1) % 4; }
+    if (this.elapsed >= (this.state === 'sleep' || this.state === 'doze' ? .8 : .3)) { this.elapsed = 0; this.frame = (this.frame + 1) % 4; }
     if (now > this.actionUntil) {
       if (pet.hunger < 15 || pet.happiness < 15 || pet.hygiene < 10) this.state = 'sad';
       else if (pet.energy < 12) this.state = 'sleep';
@@ -107,8 +118,22 @@ export class PonyAnimator {
         if (this.x > 158) { this.x = 158; this.direction = -1; }
       }
     }
-    const pose = this.state === 'look' || this.state === 'curious'
-      ? (this.frame === 2 ? 'blink' : 'idle')
+    const canBlink = !reduced && now >= this.actionUntil && ['idle', 'look', 'curious'].includes(this.state);
+    if (this.blinkRemaining > 0) {
+      this.blinkRemaining = Math.max(0, this.blinkRemaining - dt);
+      // Never resume half a blink after a walk, reaction, sleep, or reduced-motion change.
+      if (!canBlink) this.blinkRemaining = 0;
+    }
+    if (canBlink) {
+      this.blinkIn -= dt;
+      if (this.blinkIn <= 0 && this.blinkRemaining === 0) {
+        this.blinkRemaining = .32;
+        this.blinkIn = 4.5 + Math.random() * 2.5;
+      }
+    }
+    const pose = this.state === 'blink' || (canBlink && this.blinkRemaining > 0)
+      ? 'blink'
+      : this.state === 'look' || this.state === 'curious' ? 'idle'
       : this.state === 'play' || this.state === 'stretch' ? 'happy'
       : this.state === 'sniff' ? 'eat'
       : this.state === 'groom' ? 'wash'
