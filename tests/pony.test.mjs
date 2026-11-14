@@ -32,13 +32,35 @@ test('walking stays within the meadow and touch target follows Rosy', () => {
  assert.equal(hit.style.top, '232px');
 });
 test('looking and playing use existing expressive sprites', () => {
- const pony = animator(); pony.state = 'look'; pony.frame = 2;
+ const pony = animator(); pony.state = 'look'; pony.frame = 2; pony.blinkRemaining = .3;
  pony.update(0, 100, healthy);
  assert.match(pony.el.src, /blink_02/);
  pony.state = 'play';
  pony.update(0, 200, healthy);
  assert.match(pony.el.src, /happy_02/);
  assert.notEqual(pony.el.style.transform, 'translateY(0px) rotate(0deg)');
+});
+test('curious blinks are spaced out, brief, and separate from frame pacing', () => {
+ const pony = animator(); pony.state = 'curious'; pony.blinkIn = .1;
+ pony.update(.1, 100, healthy);
+ assert.match(pony.el.src, /blink_/);
+ assert.equal(pony.blinkRemaining, .32);
+
+ pony.update(.2, 300, healthy);
+ assert.equal(pony.blinkRemaining, .12);
+ assert.match(pony.el.src, /blink_/);
+
+ pony.update(.2, 500, healthy);
+ assert.equal(pony.blinkRemaining, 0);
+ assert.match(pony.el.src, /idle_/);
+ assert.ok(pony.blinkIn > 4);
+});
+test('a petting reaction takes over immediately during a blink', () => {
+ const pony = animator(); pony.state = 'curious'; pony.blinkRemaining = .2;
+ pony.pet();
+ pony.update(0, performance.now(), healthy);
+ assert.equal(pony.state, 'happy');
+ assert.match(pony.el.src, /happy_00/);
 });
 test('sleep action holds its pose and reduced motion stops walking and bouncing', () => {
  const pony = animator(); pony.action('sleep', 3000);
