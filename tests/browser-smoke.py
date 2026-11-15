@@ -7,15 +7,16 @@ html = (root/'preview-offline.html').read_text('utf-8')
 with sync_playwright() as pw:
     browser = pw.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page(viewport={'width': 760, 'height': 850}, device_scale_factor=1)
-    page.add_init_script("""\
-const NativeDate = Date;
+    fixed_clock = """const NativeDate = Date;
 const fixedNow = new NativeDate(2026, 10, 15, 22, 0, 0).getTime();
 class FixedDate extends NativeDate {
   constructor(...args) { super(...(args.length ? args : [fixedNow])); }
   static now() { return fixedNow; }
 }
-globalThis.Date = FixedDate;
-""")
+globalThis.Date = FixedDate;"""
+    marker = '<script>\\nconst SPRITE_DATA ='
+    assert marker in html, 'standalone preview script marker missing'
+    html = html.replace(marker, '<script>\\n' + fixed_clock + '\\nconst SPRITE_DATA =', 1)
     errors=[]
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.set_content(html, wait_until='load')
@@ -26,18 +27,8 @@ globalThis.Date = FixedDate;
     assert page.locator('#todayDate').inner_text() == expected_date
     assert page.locator('#hud').get_attribute('aria-hidden') == 'true'
     firefly = page.locator('#fireflyTap')
-    if not firefly.is_visible():
-        state = page.evaluate("""() => {
-          const target = document.querySelector('#fireflyTap');
-          const screen = document.querySelector('#screen');
-          return { date: new Date().toString(), hour: new Date().getHours(),
-            scene: screen?.dataset.scene, hidden: target?.hidden,
-            display: target ? getComputedStyle(target).display : null,
-            rect: target ? target.getBoundingClientRect().toJSON() : null,
-            body: document.body.innerText.slice(0, 120) };
-        }""")
-        print('Firefly diagnostic:', state)
-        print('Page errors before firefly assertion:', errors)
+    assert page.evaluate('new Date().getHours()') == 22, 'test clock must be fixed at 22:00'
+    assert page.locator('#screen').get_attribute('data-scene') == 'night'
     assert firefly.is_visible(), 'night firefly should be available on the lockscreen'
     target_box = firefly.bounding_box()
     assert target_box['width'] == 56 and target_box['height'] == 56, 'firefly touch target should be comfortable on a resistive screen'
