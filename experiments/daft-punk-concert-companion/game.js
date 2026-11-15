@@ -1,57 +1,61 @@
 export const STORAGE_KEY = 'daft-punk-concert-companion-v1';
 
 export const QUESTS = [
-  { id: 'water', stat: 'moral', gain: 25, icon: '💧', title: 'Recharge les batteries', detail: 'Bois un verre d’eau si tu en as envie' },
-  { id: 'friends', stat: 'moral', gain: 25, icon: '✦', title: 'Bonnes vibrations', detail: 'Envoie un petit mot positif à quelqu’un' },
-  { id: 'rhythm', stat: 'music', gain: 25, icon: '♫', title: 'Beat laboratory', detail: 'Réussis le mini-défi de rythme' },
-  { id: 'playlist', stat: 'music', gain: 25, icon: '▣', title: 'Le prochain morceau', detail: 'Choisis un morceau pour ta playlist' },
-  { id: 'ideas', stat: 'inspiration', gain: 25, icon: '✧', title: 'Chasse aux idées', detail: 'Note une idée pour le prochain concert' },
-  { id: 'pause', stat: 'inspiration', gain: 25, icon: '☼', title: 'Pause backstage', detail: 'Accorde-toi un moment de pause' },
+  { id: 'water', stat: 'moral', gain: 20 },
+  { id: 'meal', stat: 'moral', gain: 20 },
+  { id: 'move', stat: 'moral', gain: 20 },
+  { id: 'pause', stat: 'moral', gain: 20 },
+  { id: 'idea', stat: 'inspiration', gain: 25 },
+  { id: 'tidy', stat: 'inspiration', gain: 25 },
 ];
 
 export const dateKey = (date = new Date()) =>
   [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
 
 export function createState(date = new Date()) {
-  return {
-    version: 1,
-    date: dateKey(date),
-    completed: [],
-    stats: { moral: 0, music: 0, inspiration: 0 },
-    concerts: 0,
-  };
+  return { version: 1, date: dateKey(date), completed: [], wins: [],
+    stats: { moral: 0, music: 0, inspiration: 0 }, concerts: 0,
+    mix: { bass: 1, lead: 1, beat: 1 } };
 }
 
 export function normalizeState(raw, date = new Date()) {
   const fresh = createState(date);
   if (!raw || typeof raw !== 'object') return fresh;
   const stats = raw.stats && typeof raw.stats === 'object' ? raw.stats : {};
-  const validIds = new Set(QUESTS.map((quest) => quest.id));
+  const validQuests = new Set(QUESTS.map((quest) => quest.id));
+  const validWins = new Set(['beat', 'memory', 'mix']);
   const sameDay = raw.date === fresh.date;
+  const mix = raw.mix && typeof raw.mix === 'object' ? raw.mix : {};
   return {
     ...fresh,
-    date: fresh.date,
     completed: sameDay && Array.isArray(raw.completed)
-      ? [...new Set(raw.completed.filter((id) => validIds.has(id)))] : [],
+      ? [...new Set(raw.completed.filter((id) => validQuests.has(id)))] : [],
+    wins: sameDay && Array.isArray(raw.wins)
+      ? [...new Set(raw.wins.filter((id) => validWins.has(id)))] : [],
     stats: Object.fromEntries(['moral', 'music', 'inspiration'].map((key) => [
       key, Math.max(0, Math.min(100, Math.floor(Number(stats[key]) || 0))),
     ])),
     concerts: Math.max(0, Math.floor(Number(raw.concerts) || 0)),
+    mix: Object.fromEntries(['bass', 'lead', 'beat'].map((key) => [
+      key, Math.max(1, Math.min(3, Math.floor(Number(mix[key]) || 1))),
+    ])),
   };
 }
 
-export function loadState(storage = globalThis.localStorage, date = new Date()) {
+export function loadState(storage, date = new Date()) {
   try {
-    const raw = storage?.getItem(STORAGE_KEY);
+    const target = storage ?? globalThis.localStorage;
+    const raw = target?.getItem(STORAGE_KEY);
     return normalizeState(raw ? JSON.parse(raw) : null, date);
   } catch {
     return createState(date);
   }
 }
 
-export function saveState(state, storage = globalThis.localStorage) {
+export function saveState(state, storage) {
   try {
-    storage?.setItem(STORAGE_KEY, JSON.stringify(state));
+    const target = storage ?? globalThis.localStorage;
+    target?.setItem(STORAGE_KEY, JSON.stringify(state));
     return true;
   } catch {
     return false;
@@ -66,6 +70,17 @@ export function completeQuest(state, questId, date = new Date()) {
   current.completed.push(questId);
   current.stats[quest.stat] = Math.min(100, current.stats[quest.stat] + quest.gain);
   return { state: current, ok: true, quest };
+}
+
+export function awardMiniGame(state, gameId, stat, points, date = new Date()) {
+  const current = normalizeState(state, date);
+  if (current.wins.includes(gameId)) return { state: current, ok: false, reason: 'already-won' };
+  if (!['beat', 'memory', 'mix'].includes(gameId) || !['moral', 'music', 'inspiration'].includes(stat)) {
+    return { state: current, ok: false, reason: 'invalid-reward' };
+  }
+  current.wins.push(gameId);
+  current.stats[stat] = Math.min(100, current.stats[stat] + Math.max(0, Math.floor(points)));
+  return { state: current, ok: true };
 }
 
 export function concertReady(state) {
