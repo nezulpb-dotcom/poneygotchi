@@ -30,7 +30,7 @@ footer{display:flex;justify-content:space-between;align-items:center;margin-top:
 </head>
 <body>
 <main class="app">
-<header>DAFT PUNK<small>DAILY LIFE × MUSIC LAB · BETA 0.3</small></header>
+<header>DAFT PUNK<small>DAILY LIFE × MUSIC LAB · <span id="dateLabel"></span></small></header>
 <section class="stage" aria-label="Deux robots originaux du prototype">
 <div class="robot"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>CHROME</small></div>
 <div class="robot gold"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>GOLD</small></div>
@@ -79,38 +79,34 @@ footer{display:flex;justify-content:space-between;align-items:center;margin-top:
 <footer><span id="saveStatus">Sauvegarde locale activée</span><button class="reset" id="reset">Réinitialiser la démo</button></footer>
 </main>
 <div class="overlay" id="show"><div class="showbox"><div class="lights">✦ ♫ ✧</div><h2>ONE MORE TIME!</h2><p>Les robots sont prêts. Les lumières s'allument. La soirée peut commencer !</p><button id="close">RETOUR EN COULISSES</button></div></div>
-<script>
-(()=>{
-const KEY="daftpunk-companion-beta03";
-const today=()=>new Date().toLocaleDateString("en-CA");
-const fresh=()=>({date:today(),stats:{moral:0,music:0,inspiration:0},done:[],wins:[],mix:{bass:1,lead:1,beat:1}});
-let state=fresh();
-try{const saved=JSON.parse(localStorage.getItem(KEY)||"null");if(saved&&saved.date===today())state=saved;else if(saved&&saved.stats)state={...fresh(),stats:saved.stats};}catch(e){}
+<script type="module">
+import { createState, dateKey, loadState, saveState, completeQuest, awardMiniGame, concertReady, launchConcert } from './game.js';
 const $=id=>document.getElementById(id);
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));$("saveStatus").textContent="Progression sauvegardée";}catch(e){$("saveStatus").textContent="Sauvegarde indisponible";}};
-const award=(id,stat,points)=>{if(state.done.includes(id))return;state.done.push(id);state.stats[stat]=Math.min(100,state.stats[stat]+points);save();render();};
+let state=loadState();
+const save=()=>{saveState(state);$('saveStatus').textContent='Progression sauvegardée';};
+const award=(id)=>{const result=completeQuest(state,id);state=result.state;if(result.ok)save();render();};
 const won=id=>state.wins.includes(id);
-const win=(id,stat,points,feedback)=>{if(won(id))return;state.wins.push(id);state.stats[stat]=Math.min(100,state.stats[stat]+points);feedback.textContent="✓ Réussi ! Récompense ajoutée.";save();render();};
+const win=(id,stat,points,feedback)=>{if(won(id))return;const result=awardMiniGame(state,id,stat,points);state=result.state;if(result.ok){feedback.textContent='✓ Réussi ! Récompense ajoutée.';save();}render();};
 function render(){
- for(const k of ["moral","music","inspiration"]){$(k).style.width=state.stats[k]+"%";$(k+"Text").textContent=state.stats[k]+"%";}
- document.querySelectorAll(".mission").forEach(b=>{const done=state.done.includes(b.dataset.id);b.disabled=done;b.querySelector(".gain").textContent=done?"✓ VALIDÉE":"+"+b.dataset.gain+" "+b.dataset.stat.toUpperCase();});
- const ready=Object.values(state.stats).every(v=>v>=100);$("concert").disabled=!ready;$("concert").classList.toggle("ready",ready);$("concert").textContent=ready?"★ OUVRIR LE CONCERT ★":"CONCERT VERROUILLÉ";
- $("quote").textContent=ready?"« Le public est là. À nous de jouer ! »":"« Chaque petit pas nous rapproche de la scène. »";
- for(const [k,v] of Object.entries(state.mix))$(k+"Value").textContent=v;
- if(won("beat"))$("beatFeedback").textContent="✓ Beat validé !";
- if(won("memory"))$("memoryFeedback").textContent="✓ Mémoire parfaite !";
- if(won("mix"))$("mixFeedback").textContent="✓ Mix équilibré !";
+ for(const k of ['moral','music','inspiration']){$(k).style.width=state.stats[k]+'%';$(k+'Text').textContent=state.stats[k]+'%';}
+ document.querySelectorAll('.mission').forEach(b=>{const done=state.completed.includes(b.dataset.id);b.disabled=done;b.querySelector('.gain').textContent=done?'✓ VALIDÉE':'+'+b.dataset.gain+' '+b.dataset.stat.toUpperCase();});
+ const ready=concertReady(state);$('concert').disabled=!ready;$('concert').classList.toggle('ready',ready);$('concert').textContent=ready?'★ OUVRIR LE CONCERT ★':'CONCERT VERROUILLÉ';
+ $('quote').textContent=ready?'« Le public est là. À nous de jouer ! »':'« Chaque petit pas nous rapproche de la scène. »';
+ for(const [k,v] of Object.entries(state.mix))$(k+'Value').textContent=v;
+ if(won('beat'))$('beatFeedback').textContent='✓ Beat validé !';
+ if(won('memory'))$('memoryFeedback').textContent='✓ Mémoire parfaite !';
+ if(won('mix'))$('mixFeedback').textContent='✓ Mix équilibré !';
 }
-document.querySelectorAll(".mission").forEach(b=>b.addEventListener("click",()=>award(b.dataset.id,b.dataset.stat,Number(b.dataset.gain))));
-const beatTarget=["kick","clap","kick","hat"];let beat=[];
-$("beatPads").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{if(won("beat"))return;beat.push(b.dataset.beat);if(beat.some((v,i)=>v!==beatTarget[i])){beat=[];$("beatFeedback").textContent="Oups, recommence la boucle !";return;}$("beatFeedback").textContent="Séquence : "+beat.length+"/4";if(beat.length===4)win("beat","music",40,$("beatFeedback"));}));
-const memTarget=["BASS","LEAD","PAD"];let mem=[];
-$("memoryPads").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{if(won("memory"))return;mem.push(b.dataset.tone);if(mem.some((v,i)=>v!==memTarget[i])){mem=[];$("memoryFeedback").textContent="Pas tout à fait. Recommence !";return;}$("memoryFeedback").textContent=mem.length+"/3";if(mem.length===3)win("memory","music",30,$("memoryFeedback"));}));
-$("mixControls").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{if(won("mix"))return;const k=b.dataset.track;state.mix[k]=state.mix[k]%3+1;const vals=Object.values(state.mix);$("mixFeedback").textContent="Bass "+state.mix.bass+" · Lead "+state.mix.lead+" · Beat "+state.mix.beat;if(vals.every(v=>v===2))win("mix","inspiration",30,$("mixFeedback"));save();render();}));
-$("concert").addEventListener("click",()=>{if(Object.values(state.stats).every(v=>v>=100))$("show").classList.add("show");});
-$("close").addEventListener("click",()=>$("show").classList.remove("show"));
-$("reset").addEventListener("click",()=>{if(!confirm("Effacer la progression de cette démo ?"))return;state=fresh();beat=[];mem=[];save();render();$("beatFeedback").textContent="Séquence : 0/4";$("memoryFeedback").textContent="0/3";$("mixFeedback").textContent="Ajuste chaque piste (1 → 2 → 3).";});
+$('dateLabel').textContent=dateKey();
+document.querySelectorAll('.mission').forEach(b=>b.addEventListener('click',()=>award(b.dataset.id)));
+const beatTarget=['kick','clap','kick','hat'];let beat=[];
+$('beatPads').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('beat'))return;beat.push(b.dataset.beat);if(beat.some((v,i)=>v!==beatTarget[i])){beat=[];$('beatFeedback').textContent='Oups, recommence la boucle !';return;}$('beatFeedback').textContent='Séquence : '+beat.length+'/4';if(beat.length===4)win('beat','music',40,$('beatFeedback'));}));
+const memTarget=['BASS','LEAD','PAD'];let mem=[];
+$('memoryPads').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('memory'))return;mem.push(b.dataset.tone);if(mem.some((v,i)=>v!==memTarget[i])){mem=[];$('memoryFeedback').textContent='Pas tout à fait. Recommence !';return;}$('memoryFeedback').textContent=mem.length+'/3';if(mem.length===3)win('memory','music',30,$('memoryFeedback'));}));
+$('mixControls').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('mix'))return;const k=b.dataset.track;state.mix[k]=state.mix[k]%3+1;const vals=Object.values(state.mix);$('mixFeedback').textContent='Bass '+state.mix.bass+' · Lead '+state.mix.lead+' · Beat '+state.mix.beat;if(vals.every(v=>v===2))win('mix','inspiration',30,$('mixFeedback'));save();render();}));
+$('concert').addEventListener('click',()=>{if(!concertReady(state))return;const result=launchConcert(state);state=result.state;save();$('show').classList.add('show');});
+$('close').addEventListener('click',()=>$('show').classList.remove('show'));
+$('reset').addEventListener('click',()=>{if(!confirm('Effacer la progression de cette démo ?'))return;state=createState();beat=[];mem=[];save();render();$('beatFeedback').textContent='Séquence : 0/4';$('memoryFeedback').textContent='0/3';$('mixFeedback').textContent='Ajuste chaque piste (1 → 2 → 3).';});
 render();save();
-})();
 </script>
 </body></html>
