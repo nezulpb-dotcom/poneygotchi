@@ -15,7 +15,7 @@ export const localDateKey = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 export function emptyDay(date = new Date()) {
-  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false, fireflyFound: false };
+  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false, fireflyStep: 0, fireflyFound: false };
 }
 
 export function newGame(date = new Date()) {
@@ -49,6 +49,8 @@ export function restoreGame(raw, date = new Date()) {
   merged.pet.level = Math.max(1, Math.floor(Number(merged.pet.level) || 1));
   merged.pet.xp = Math.max(0, Number(merged.pet.xp) || 0);
   if (merged.daily.date !== localDateKey(date)) merged.daily = emptyDay(date);
+  merged.daily.fireflyStep = Math.max(0, Math.min(2, Math.floor(Number(merged.daily.fireflyStep) || 0)));
+  merged.daily.fireflyFound = Boolean(merged.daily.fireflyFound) || merged.daily.fireflyStep >= 2;
   if (!ITEMS.some((i) => i.id === merged.equipped) || !merged.inventory.includes(merged.equipped)) merged.equipped = 'none';
   merged.updatedAt = Number.isFinite(merged.updatedAt) ? merged.updatedAt : date.getTime();
   return merged;
@@ -58,12 +60,16 @@ export function advanceDay(game, date = new Date()) {
   if (game.daily.date !== localDateKey(date)) game.daily = emptyDay(date);
 }
 
-// A quiet evening discovery: no currency or XP, just a memory for today.
-export function discoverFirefly(game, date = new Date()) {
+// Follow a firefly across two gentle touches. The discovery is a daily memory,
+// never a currency or XP reward; an unfinished trail survives a page reload.
+export function followFirefly(game, date = new Date()) {
   advanceDay(game, date);
-  if (game.daily.fireflyFound) return { ok: false, reason: 'already-found' };
-  game.daily.fireflyFound = true;
-  return { ok: true, day: game.daily.date };
+  if (game.daily.fireflyFound) return { ok: false, reason: 'already-found', step: 2 };
+  const nextStep = Math.min(2, game.daily.fireflyStep + 1);
+  game.daily.fireflyStep = nextStep;
+  const found = nextStep === 2;
+  if (found) game.daily.fireflyFound = true;
+  return { ok: true, step: nextStep, found, day: game.daily.date };
 }
 
 export function grant(game, { stars = 0, xp = 0 } = {}) {
