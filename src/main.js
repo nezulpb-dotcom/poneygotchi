@@ -1,5 +1,5 @@
 import { loadGame, saveGame } from './core/storage.js';
-import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp } from './core/game.js';
+import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp, discoverFirefly } from './core/game.js';
 import { createMemoryRound, revealMemoryCard, revealMemoryHint, clearMemoryHint, recordMemoryWin } from './core/memory-game.js';
 import { memoryReaction } from './core/memory-reactions.js';
 import { createPettingState, petRosy } from './core/petting.js';
@@ -22,6 +22,7 @@ let lastFrame = performance.now();
 let needAccumulator = 0;
 let lastSaved = Date.now();
 let currentScene = '';
+let fireflyFeedbackUntil = 0;
 let memoryRound = null;
 let memoryHintTimer;
 let pettingState = createPettingState();
@@ -42,15 +43,27 @@ function reactToMemory(result, variant = 0, suffix = '') {
   $('statusPetal').textContent = message;
   say(message);
 }
+function updateFireflyTarget() {
+  const target = $('fireflyTap');
+  if (!target) return;
+  const feedback = Date.now() < fireflyFeedbackUntil;
+  const panelOpen = $('sheetWrap').classList.contains('open');
+  const visible = currentScene === 'night' && !hudOpen && !panelOpen && (!game.daily.fireflyFound || feedback);
+  target.hidden = !visible;
+  target.classList.toggle('found', visible && feedback);
+}
+
 function hideHud() {
   hudOpen = false;
   clearTimeout(hudHideTimer);
   $('hud').classList.remove('open');
   $('screen').classList.remove('hud-active');
   $('hud').setAttribute('aria-hidden', 'true');
+  updateFireflyTarget();
 }
 function showHud() {
   hudOpen = true;
+  updateFireflyTarget();
   $('hud').classList.add('open');
   $('screen').classList.add('hud-active');
   $('hud').setAttribute('aria-hidden', 'false');
@@ -64,6 +77,7 @@ function showPanel(tab = 'missions') {
   panelTab = tab;
   $('sheetWrap').classList.add('open');
   $('sheetWrap').setAttribute('aria-hidden', 'false');
+  updateFireflyTarget();
   drawPanel();
   clearTimeout(hudHideTimer);
   $('closeSheet').focus();
@@ -123,6 +137,7 @@ function updateTime() {
     $('screen').dataset.scene = scene;
     $('landscape').style.backgroundImage = `url('./assets/backgrounds/meadow_${scene}.png')`;
   }
+  updateFireflyTarget();
   maybeReminder(date);
 }
 function maybeReminder(now) {
@@ -159,6 +174,22 @@ function animate(now) {
 }
 
 $('screenTap').addEventListener('click', () => hudOpen ? hideHud() : showHud());
+$('fireflyTap').addEventListener('click', () => {
+  const result = discoverFirefly(game, new Date());
+  if (!result.ok) { updateFireflyTarget(); return; }
+  fireflyFeedbackUntil = Date.now() + 900;
+  pony.direction = 1;
+  pony.action('curious', 1600);
+  const message = 'Une luciole scintille… Rosy la suit du regard. ✨';
+  $('statusPetal').textContent = message;
+  say(message);
+  updateFireflyTarget();
+  save();
+  setTimeout(() => {
+    fireflyFeedbackUntil = 0;
+    updateFireflyTarget();
+  }, 950);
+});
 $('petTap').addEventListener('click', (event) => {
   const button = $('petTap');
   const bounds = button.getBoundingClientRect();
