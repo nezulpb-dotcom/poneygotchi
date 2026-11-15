@@ -189,3 +189,10 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .firefly-target:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @keyframes firefly-caught { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: translate(18px,-22px) scale(2.4); } }
 @media(prefers-reduced-motion:reduce) { .firefly-target::before, .firefly-target.found::before { animation: none !important; } .firefly-target.found::before { opacity: .25; } }
+
+
+/* Large, separated touch target for the two-step evening firefly trail. */
+.firefly-target { left: 252px; top: 315px; width: 56px; height: 56px; transition: left .38s ease, top .38s ease; }
+.firefly-target.trail-second { left: 12px; top: 286px; }
+.firefly-target::before { inset: 21px; }
+.firefly-target::after { font-size: 22px; }

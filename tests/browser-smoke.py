@@ -27,11 +27,20 @@ globalThis.Date = FixedDate;
     assert page.locator('#hud').get_attribute('aria-hidden') == 'true'
     firefly = page.locator('#fireflyTap')
     assert firefly.is_visible(), 'night firefly should be available on the lockscreen'
+    target_box = firefly.bounding_box()
+    assert target_box['width'] == 56 and target_box['height'] == 56, 'firefly touch target should be comfortable on a resistive screen'
     firefly.click()
-    assert 'luciole' in page.locator('#bubble').inner_text().lower()
+    assert firefly.get_attribute('data-step') == '1'
+    assert 'trail-second' in (firefly.get_attribute('class') or '')
+    assert 's’envole' in page.locator('#bubble').inner_text().lower()
+    assert firefly.get_attribute('aria-label') == 'Retrouver la luciole de l’autre côté'
     assert page.locator('#ponyWrap').get_attribute('data-pose') == 'curious'
+    page.wait_for_timeout(450)
+    firefly.click()
+    assert firefly.get_attribute('data-step') == '2'
+    assert 'étoiles' in page.locator('#bubble').inner_text().lower()
     page.wait_for_timeout(1000)
-    assert not firefly.is_visible(), 'a discovered firefly should not repeat the same evening'
+    assert not firefly.is_visible(), 'a completed firefly trail should not repeat the same evening'
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_lockscreen.png'))
     page.locator('#screenTap').click(position={'x':24,'y':215})
     assert page.locator('#hud').get_attribute('aria-hidden') == 'false'
