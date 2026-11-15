@@ -1,91 +1,116 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DAFT PUNK — Concert Tonight</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daft Punk — Daily Life & Concert</title>
 <style>
-:root{color-scheme:dark;--gold:#f4c95d;--cyan:#65e6ed;--pink:#f278b5;--ink:#080b18;--panel:#151a2e}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 12%,#283252 0,#11172b 42%,#070a15 100%);color:#f4f4f7;font:14px system-ui,sans-serif;display:grid;place-items:center;padding:12px}
-.device{width:min(100%,360px);min-height:650px;border:2px solid #4d5875;border-radius:25px;padding:15px;background:linear-gradient(160deg,#171e35,#080b17 75%);box-shadow:0 18px 55px #0009;overflow:hidden;position:relative}
-header{text-align:center;letter-spacing:.22em;font-weight:900;color:var(--gold);font-size:13px}header small{display:block;color:#a9b2cb;letter-spacing:.16em;font-size:9px;margin-top:4px}
-.stage{height:210px;display:flex;align-items:center;justify-content:center;gap:18px;position:relative;margin:8px 0 4px;background:linear-gradient(180deg,#141c35aa,#11172b22);border-radius:16px}
-.stage:before{content:"";position:absolute;bottom:21px;width:85%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--gold),transparent);box-shadow:0 0 18px var(--cyan)}
-.robot{width:105px;height:128px;position:relative;display:flex;flex-direction:column;align-items:center;animation:bob 2.6s ease-in-out infinite}
-.robot:nth-child(2){animation-delay:-1.1s}
-.helmet{width:83px;height:76px;border-radius:24px 24px 19px 19px;border:3px solid #c6cbd8;background:linear-gradient(145deg,#f9fbff,#aab4c9 55%,#59647b);box-shadow:inset -8px -7px 0 #68738b,0 0 22px #d8e7ff44;position:relative}
-.robot.gold .helmet{background:linear-gradient(145deg,#fff1b3,#d9a93e 58%,#72501b);border-color:#ffe7a0}
-.visor{position:absolute;left:8px;right:8px;top:25px;height:19px;border-radius:5px;background:#10182a;box-shadow:0 0 10px var(--cyan);border:1px solid #62728d}
-.gold .visor{box-shadow:0 0 10px var(--gold)}
-.visor:after{content:"";position:absolute;left:9px;right:9px;top:8px;height:2px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
-.gold .visor:after{background:var(--gold);box-shadow:0 0 8px var(--gold)}
-.body{width:64px;height:48px;margin-top:4px;border-radius:13px 13px 7px 7px;background:linear-gradient(110deg,#353e55,#151b2b);border:2px solid #6c7894;position:relative}
-.body:after{content:"";position:absolute;left:15px;right:15px;top:12px;height:4px;background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
-.gold .body:after{background:var(--gold);box-shadow:0 0 9px var(--gold)}
-.name{font-size:9px;letter-spacing:.18em;color:#b8c1d7;margin-top:5px}
-@keyframes bob{0%,100%{transform:translateY(2px)}50%{transform:translateY(-7px)}}
-.status{text-align:center;color:#c6cee1;font-size:11px;min-height:18px}
-.meters{display:grid;gap:9px;margin:12px 0}
-.meter{background:#11172a;border:1px solid #303b58;border-radius:10px;padding:8px 10px}
-.meter-top{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.08em;margin-bottom:6px}
-.track{height:9px;background:#080c18;border-radius:9px;overflow:hidden}
-.fill{height:100%;width:0%;border-radius:9px;transition:width .35s;background:linear-gradient(90deg,#9b68df,#65e6ed);box-shadow:0 0 10px #65e6ed66}
-.meter:nth-child(2) .fill{background:linear-gradient(90deg,#4d9ee8,#65e6ed)}
-.meter:nth-child(3) .fill{background:linear-gradient(90deg,#d17bd2,#f4c95d)}
-.section-title{font-size:10px;letter-spacing:.18em;color:var(--gold);font-weight:900;margin:15px 0 7px}
-.quests{display:grid;gap:7px}
-.quest{display:flex;align-items:center;gap:8px;text-align:left;width:100%;padding:9px;background:#171e32;border:1px solid #35415f;border-radius:10px;color:#f2f4fa;font-size:11px;cursor:pointer}
-.quest:active{transform:scale(.985)}.quest:disabled{opacity:.45;cursor:default}
-.qicon{font-size:18px;width:25px;text-align:center}.qcopy{flex:1}.qcopy b{display:block;font-size:11px}.qcopy small{color:#aeb9d1;font-size:9px}
-.reward{color:var(--cyan);font-size:9px;font-weight:800;white-space:nowrap}
-.concert{width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;background:linear-gradient(90deg,#4c526b,#353d55);color:#aab4cb;font-weight:900;letter-spacing:.16em}
-.concert.ready{background:linear-gradient(90deg,#f1b83d,#f278b5);color:#17101d;box-shadow:0 0 22px #f4c95d66;cursor:pointer}
-.note{text-align:center;color:#75809b;font-size:9px;margin:9px 0 0}
-.overlay{position:absolute;inset:0;background:#070a15f2;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;z-index:3}
-.overlay.show{display:flex}.overlay h2{color:var(--gold);letter-spacing:.18em}.lights{font-size:40px;animation:flash .55s infinite alternate}@keyframes flash{to{filter:drop-shadow(0 0 18px var(--pink));transform:scale(1.08)}}
-.overlay button{margin-top:20px;padding:11px 18px;border:1px solid var(--gold);border-radius:10px;background:#171e32;color:white}
-@media(max-height:720px){.device{min-height:0}.stage{height:170px}.robot{transform:scale(.88)}}
+:root{color-scheme:dark;--bg:#080b18;--panel:#171e32;--line:#35415f;--gold:#f4c95d;--cyan:#65e6ed;--pink:#f278b5}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:12px;background:radial-gradient(ellipse at 50% 8%,#283252,#080b18 72%);color:#f4f4f7;font:14px system-ui,sans-serif;display:grid;place-items:center}
+.app{width:min(100%,390px);border:1px solid #53617f;border-radius:24px;padding:14px;background:linear-gradient(155deg,#171e35,#090d1b 75%);box-shadow:0 20px 65px #0009}
+header{text-align:center;color:var(--gold);font-weight:900;letter-spacing:.2em;font-size:15px}header small{display:block;color:#a9b2cb;font-size:9px;margin-top:4px;letter-spacing:.15em}
+.stage{height:142px;display:flex;justify-content:center;align-items:center;gap:30px;margin:10px 0;background:linear-gradient(#18213b,#10172a);border-radius:15px;position:relative;overflow:hidden}
+.stage:after{content:"";position:absolute;bottom:13px;width:85%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--gold),transparent);box-shadow:0 0 20px var(--cyan)}
+.robot{display:grid;justify-items:center;gap:5px;animation:bob 2.4s ease-in-out infinite}.robot:nth-child(2){animation-delay:-1.1s}
+.helmet{width:69px;height:65px;border-radius:21px 21px 16px 16px;border:3px solid #cbd2e2;background:linear-gradient(145deg,#fff,#8b98b3);position:relative;box-shadow:inset -7px -6px #59647b,0 0 16px #d8e7ff33}
+.gold .helmet{background:linear-gradient(145deg,#fff0ae,#d5a337 65%,#79521d);border-color:#ffe7a0}
+.visor{position:absolute;left:7px;right:7px;top:23px;height:17px;border-radius:4px;background:#10182a;border:1px solid #62728d;box-shadow:0 0 9px var(--cyan)}
+.gold .visor{box-shadow:0 0 9px var(--gold)}.visor:after{content:"";position:absolute;left:9px;right:9px;top:7px;height:2px;background:var(--cyan)}.gold .visor:after{background:var(--gold)}
+.torso{width:49px;height:29px;border:2px solid #6c7894;border-radius:9px;background:linear-gradient(100deg,#3b455e,#151b2b)}
+.torso:after{content:"";display:block;width:20px;height:3px;margin:8px auto;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}.gold .torso:after{background:var(--gold)}
+.robot small{font-size:8px;letter-spacing:.18em;color:#b8c1d7}@keyframes bob{50%{transform:translateY(-5px)}}
+.quote{text-align:center;color:#c6cee1;font-size:11px;min-height:17px}
+.meters{display:grid;gap:7px;margin:12px 0}.meter{background:#11172a;border:1px solid #303b58;border-radius:9px;padding:7px 9px}.meterline{display:flex;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:5px}.track{height:8px;background:#080c18;border-radius:8px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,#9b68df,var(--cyan));transition:width .3s}
+.section{font-size:10px;letter-spacing:.16em;color:var(--gold);font-weight:900;margin:15px 0 7px}.hint{font-size:10px;color:#aeb9d1;line-height:1.45;margin:-2px 0 8px}
+.grid{display:grid;gap:7px}.mission{display:flex;align-items:center;gap:8px;text-align:left;width:100%;padding:9px;background:#171e32;border:1px solid var(--line);border-radius:10px;color:#f2f4fa;cursor:pointer}.mission:disabled{opacity:.48;cursor:default}.mi{font-size:18px;width:24px}.copy{flex:1}.copy b{display:block;font-size:11px}.copy small{display:block;color:#aeb9d1;font-size:9px;line-height:1.3}.gain{font-size:9px;color:var(--cyan);white-space:nowrap;font-weight:800}
+.game{background:#151c30;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.gamehead{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:900}.pill{font-size:9px;color:var(--cyan)}.game p{font-size:10px;color:#aeb9d1;line-height:1.45;margin:6px 0}
+.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button,.primary,.reset{border:1px solid #55627e;background:#202a43;color:#f5f6fa;border-radius:8px;padding:8px 10px;font-weight:800;font-size:10px;cursor:pointer}.actions button:disabled{opacity:.4}.primary{width:100%;padding:13px;margin-top:10px;background:#3b435a;color:#9ca8bf;border:0;letter-spacing:.15em}.primary.ready{background:linear-gradient(90deg,#f1b83d,#f278b5);color:#17101d;cursor:pointer}.feedback{min-height:15px;font-size:10px;color:var(--cyan);margin-top:5px}
+footer{display:flex;justify-content:space-between;align-items:center;margin-top:9px;color:#78839d;font-size:9px}.reset{font-size:9px;padding:5px 8px}
+.overlay{position:fixed;inset:0;background:#070a15f5;display:none;place-items:center;text-align:center;padding:25px;z-index:5}.overlay.show{display:grid}.showbox{max-width:340px}.lights{font-size:42px;animation:flash .6s infinite alternate}@keyframes flash{to{filter:drop-shadow(0 0 20px var(--pink));transform:scale(1.08)}}.showbox h2{color:var(--gold);letter-spacing:.18em}.showbox button{padding:11px 18px;border:1px solid var(--gold);border-radius:9px;background:#171e32;color:white}
 </style>
 </head>
 <body>
-<main class="device">
-<header>DAFT PUNK <small>CONCERT TONIGHT · DAILY MISSION</small></header>
-<section class="stage" aria-label="Les deux robots">
-<div class="robot"><div class="helmet"><div class="visor"></div></div><div class="body"></div><div class="name">THOMAS</div></div>
-<div class="robot gold"><div class="helmet"><div class="visor"></div></div><div class="body"></div><div class="name">GUY-MAN</div></div>
+<main class="app">
+<header>DAFT PUNK<small>DAILY LIFE × MUSIC LAB · BETA 0.3</small></header>
+<section class="stage" aria-label="Deux robots originaux du prototype">
+<div class="robot"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>CHROME</small></div>
+<div class="robot gold"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>GOLD</small></div>
 </section>
-<div class="status" id="status">« On prépare quelque chose de spécial. »</div>
-<section class="meters" aria-label="Progression du concert">
-<div class="meter"><div class="meter-top"><span>✦ MORAL</span><span id="moralText">0 / 100</span></div><div class="track"><div class="fill" id="moral"></div></div></div>
-<div class="meter"><div class="meter-top"><span>♫ MUSIQUE</span><span id="musicText">0 / 100</span></div><div class="track"><div class="fill" id="music"></div></div></div>
-<div class="meter"><div class="meter-top"><span>✧ INSPIRATION</span><span id="inspirationText">0 / 100</span></div><div class="track"><div class="fill" id="inspiration"></div></div></div>
+<div class="quote" id="quote">« On prépare quelque chose de spécial. »</div>
+<section class="meters">
+<div class="meter"><div class="meterline"><span>✦ MORAL</span><span id="moralText">0%</span></div><div class="track"><div class="fill" id="moral"></div></div></div>
+<div class="meter"><div class="meterline"><span>♫ MUSIQUE</span><span id="musicText">0%</span></div><div class="track"><div class="fill" id="music"></div></div></div>
+<div class="meter"><div class="meterline"><span>✧ INSPIRATION</span><span id="inspirationText">0%</span></div><div class="track"><div class="fill" id="inspiration"></div></div></div>
 </section>
-<div class="section-title">MISSIONS DU JOUR</div>
-<section class="quests">
-<button class="quest" data-stat="moral" data-gain="25"><span class="qicon">⚡</span><span class="qcopy"><b>Recharge les batteries</b><small>Fais une pause et reviens avec de l'énergie</small></span><span class="reward">+25 MORAL</span></button>
-<button class="quest" data-stat="music" data-gain="25"><span class="qicon">♫</span><span class="qcopy"><b>Le beat parfait</b><small>Tapote un rythme sur l'écran pendant 10 secondes</small></span><span class="reward">+25 MUSIQUE</span></button>
-<button class="quest" data-stat="inspiration" data-gain="25"><span class="qicon">✧</span><span class="qcopy"><b>Chasse aux idées</b><small>Trouve une idée folle pour le show</small></span><span class="reward">+25 INSPIRATION</span></button>
-<button class="quest" data-stat="moral" data-gain="25"><span class="qicon">◈</span><span class="qcopy"><b>Petit moment entre amis</b><small>Envoie un encouragement aux robots</small></span><span class="reward">+25 MORAL</span></button>
-<button class="quest" data-stat="music" data-gain="25"><span class="qicon">▣</span><span class="qcopy"><b>Construis le set</b><small>Choisis le prochain morceau de la soirée</small></span><span class="reward">+25 MUSIQUE</span></button>
-<button class="quest" data-stat="inspiration" data-gain="25"><span class="qicon">☼</span><span class="qcopy"><b>Imagine la scène</b><small>Visualise les lumières et les lasers</small></span><span class="reward">+25 INSPIRATION</span></button>
+<div class="section">01 · MISSIONS DE LA VRAIE VIE</div>
+<p class="hint">Coche une action quand tu l'as réellement faite. Pas de preuve, pas de sanction si tu passes ton tour. Les missions quotidiennes se renouvellent chaque jour.</p>
+<section class="grid" id="missions">
+<button class="mission" data-id="water" data-stat="moral" data-gain="20"><span class="mi">💧</span><span class="copy"><b>Pause hydratation</b><small>Bois un verre d'eau si tu en as envie.</small></span><span class="gain">+20 MORAL</span></button>
+<button class="mission" data-id="meal" data-stat="moral" data-gain="20"><span class="mi">🥗</span><span class="copy"><b>Repas qui fait du bien</b><small>Prends un repas varié, à ton rythme.</small></span><span class="gain">+20 MORAL</span></button>
+<button class="mission" data-id="move" data-stat="moral" data-gain="20"><span class="mi">🚶</span><span class="copy"><b>Recharge physique</b><small>Marche ou étire-toi quelques minutes, si possible.</small></span><span class="gain">+20 MORAL</span></button>
+<button class="mission" data-id="pause" data-stat="moral" data-gain="20"><span class="mi">🌿</span><span class="copy"><b>Pause sans écran</b><small>Accorde-toi un instant de calme.</small></span><span class="gain">+20 MORAL</span></button>
+<button class="mission" data-id="idea" data-stat="inspiration" data-gain="25"><span class="mi">💡</span><span class="copy"><b>Capture une idée</b><small>Note une idée, une envie ou une chose qui t'inspire.</small></span><span class="gain">+25 INSPIRATION</span></button>
+<button class="mission" data-id="tidy" data-stat="inspiration" data-gain="25"><span class="mi">🎛️</span><span class="copy"><b>Coin studio</b><small>Range un petit espace autour de toi.</small></span><span class="gain">+25 INSPIRATION</span></button>
 </section>
-<button class="concert" id="concert" disabled>CONCERT VERROUILLÉ</button>
-<p class="note">Prototype indépendant · progression de démonstration</p>
-<div class="overlay" id="show"><div class="lights">✦ ♫ ✧</div><h2>ONE MORE TIME!</h2><p>Les jauges sont pleines. Les robots sont prêts.<br>La soirée peut commencer !</p><button id="close">RETOUR EN COULISSES</button></div>
+<div class="section">02 · MUSIC LAB — MINI-JEUX</div>
+<section class="game">
+<div class="gamehead"><span>🥁 BEAT SEQUENCER</span><span class="pill">+40 MUSIQUE</span></div>
+<p>Reproduis la boucle : KICK → CLAP → KICK → HAT. Les quatre pads ci-dessous sont ton séquenceur.</p>
+<div class="actions" id="beatPads">
+<button data-beat="kick">🥁 KICK</button><button data-beat="clap">👏 CLAP</button><button data-beat="hat">🔔 HAT</button>
+</div>
+<div class="feedback" id="beatFeedback">Séquence : 0/4</div>
+</section>
+<section class="game">
+<div class="gamehead"><span>🧠 SYNTH MEMORY</span><span class="pill">+30 MUSIQUE</span></div>
+<p>Mémorise la séquence affichée, puis reproduis-la dans le même ordre.</p>
+<div id="memoryPrompt" class="feedback">Séquence : BASS → LEAD → PAD</div>
+<div class="actions" id="memoryPads"><button data-tone="BASS">BASS</button><button data-tone="LEAD">LEAD</button><button data-tone="PAD">PAD</button></div>
+<div class="feedback" id="memoryFeedback">0/3</div>
+</section>
+<section class="game">
+<div class="gamehead"><span>🎚️ MIX CONSOLE</span><span class="pill">+30 INSPIRATION</span></div>
+<p>Règle les trois pistes pour obtenir un mix équilibré : toutes les pistes au niveau 2.</p>
+<div class="actions" id="mixControls">
+<button data-track="bass">BASS <b id="bassValue">1</b></button><button data-track="lead">LEAD <b id="leadValue">1</b></button><button data-track="beat">BEAT <b id="beatValue">1</b></button>
+</div>
+<div class="feedback" id="mixFeedback">Ajuste chaque piste (1 → 2 → 3).</div>
+</section>
+<button class="primary" id="concert" disabled>CONCERT VERROUILLÉ</button>
+<footer><span id="saveStatus">Sauvegarde locale activée</span><button class="reset" id="reset">Réinitialiser la démo</button></footer>
 </main>
+<div class="overlay" id="show"><div class="showbox"><div class="lights">✦ ♫ ✧</div><h2>ONE MORE TIME!</h2><p>Les robots sont prêts. Les lumières s'allument. La soirée peut commencer !</p><button id="close">RETOUR EN COULISSES</button></div></div>
 <script>
-const stats={moral:0,music:0,inspiration:0};const done=new Set();
-const messages=["« On prépare quelque chose de spécial. »","« Le public n'est pas prêt. »","« Encore un peu de magie ! »","« Ça commence à ressembler à une soirée. »"];
+(()=>{
+const KEY="daftpunk-companion-beta03";
+const today=()=>new Date().toLocaleDateString("en-CA");
+const fresh=()=>({date:today(),stats:{moral:0,music:0,inspiration:0},done:[],wins:[],mix:{bass:1,lead:1,beat:1}});
+let state=fresh();
+try{const saved=JSON.parse(localStorage.getItem(KEY)||"null");if(saved&&saved.date===today())state=saved;else if(saved&&saved.stats)state={...fresh(),stats:saved.stats};}catch(e){}
+const $=id=>document.getElementById(id);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));$("saveStatus").textContent="Progression sauvegardée";}catch(e){$("saveStatus").textContent="Sauvegarde indisponible";}};
+const award=(id,stat,points)=>{if(state.done.includes(id))return;state.done.push(id);state.stats[stat]=Math.min(100,state.stats[stat]+points);save();render();};
+const won=id=>state.wins.includes(id);
+const win=(id,stat,points,feedback)=>{if(won(id))return;state.wins.push(id);state.stats[stat]=Math.min(100,state.stats[stat]+points);feedback.textContent="✓ Réussi ! Récompense ajoutée.";save();render();};
 function render(){
- for(const [k,v] of Object.entries(stats)){document.getElementById(k).style.width=v+"%";document.getElementById(k+"Text").textContent=v+" / 100"}
- const ready=Object.values(stats).every(v=>v>=100);
- document.querySelectorAll(".quest").forEach((b,i)=>b.disabled=done.has(i)||ready);
- const c=document.getElementById("concert");c.disabled=!ready;c.classList.toggle("ready",ready);c.textContent=ready?"★ LANCER LE CONCERT ★":"CONCERT VERROUILLÉ";
- document.getElementById("status").textContent=ready?"« C'est bon. On monte sur scène ? »":messages[Math.min(3,Math.floor(Object.values(stats).reduce((a,b)=>a+b,0)/75))];
+ for(const k of ["moral","music","inspiration"]){$(k).style.width=state.stats[k]+"%";$(k+"Text").textContent=state.stats[k]+"%";}
+ document.querySelectorAll(".mission").forEach(b=>{const done=state.done.includes(b.dataset.id);b.disabled=done;b.querySelector(".gain").textContent=done?"✓ VALIDÉE":"+"+b.dataset.gain+" "+b.dataset.stat.toUpperCase();});
+ const ready=Object.values(state.stats).every(v=>v>=100);$("concert").disabled=!ready;$("concert").classList.toggle("ready",ready);$("concert").textContent=ready?"★ OUVRIR LE CONCERT ★":"CONCERT VERROUILLÉ";
+ $("quote").textContent=ready?"« Le public est là. À nous de jouer ! »":"« Chaque petit pas nous rapproche de la scène. »";
+ for(const [k,v] of Object.entries(state.mix))$(k+"Value").textContent=v;
+ if(won("beat"))$("beatFeedback").textContent="✓ Beat validé !";
+ if(won("memory"))$("memoryFeedback").textContent="✓ Mémoire parfaite !";
+ if(won("mix"))$("mixFeedback").textContent="✓ Mix équilibré !";
 }
-document.querySelectorAll(".quest").forEach((b,i)=>b.addEventListener("click",()=>{if(done.has(i))return;done.add(i);const k=b.dataset.stat;stats[k]=Math.min(100,stats[k]+Number(b.dataset.gain));render()}));
-document.getElementById("concert").addEventListener("click",()=>document.getElementById("show").classList.add("show"));
-document.getElementById("close").addEventListener("click",()=>document.getElementById("show").classList.remove("show"));
-render();
+document.querySelectorAll(".mission").forEach(b=>b.addEventListener("click",()=>award(b.dataset.id,b.dataset.stat,Number(b.dataset.gain))));
+const beatTarget=["kick","clap","kick","hat"];let beat=[];
+$("beatPads").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{if(won("beat"))return;beat.push(b.dataset.beat);if(beat.some((v,i)=>v!==beatTarget[i])){beat=[];$("beatFeedback").textContent="Oups, recommence la boucle !";return;}$("beatFeedback").textContent="Séquence : "+beat.length+"/4";if(beat.length===4)win("beat","music",40,$("beatFeedback"));}));
+const memTarget=["BASS","LEAD","PAD"];let mem=[];
+$("memoryPads").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{if(won("memory"))return;mem.push(b.dataset.tone);if(mem.some((v,i)=>v!==memTarget[i])){mem=[];$("memoryFeedback").textContent="Pas tout à fait. Recommence !";return;}$("memoryFeedback").textContent=mem.length+"/3";if(mem.length===3)win("memory","music",30,$("memoryFeedback"));}));
+$("mixControls").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{if(won("mix"))return;const k=b.dataset.track;state.mix[k]=state.mix[k]%3+1;const vals=Object.values(state.mix);$("mixFeedback").textContent="Bass "+state.mix.bass+" · Lead "+state.mix.lead+" · Beat "+state.mix.beat;if(vals.every(v=>v===2))win("mix","inspiration",30,$("mixFeedback"));save();render();}));
+$("concert").addEventListener("click",()=>{if(Object.values(state.stats).every(v=>v>=100))$("show").classList.add("show");});
+$("close").addEventListener("click",()=>$("show").classList.remove("show"));
+$("reset").addEventListener("click",()=>{if(!confirm("Effacer la progression de cette démo ?"))return;state=fresh();beat=[];mem=[];save();render();$("beatFeedback").textContent="Séquence : 0/4";$("memoryFeedback").textContent="0/3";$("mixFeedback").textContent="Ajuste chaque piste (1 → 2 → 3).";});
+render();save();
+})();
 </script>
 </body></html>
