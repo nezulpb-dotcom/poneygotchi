@@ -45,7 +45,14 @@ export function normalizeState(raw, date = new Date()) {
 export function loadState(storage, date = new Date()) {
   try {
     const target = storage ?? globalThis.localStorage;
-    const raw = target?.getItem(STORAGE_KEY);
+    let raw = target?.getItem(STORAGE_KEY);
+    if (!raw) {
+      const legacy = target?.getItem('daftpunk-companion-beta03');
+      if (legacy) {
+        const previous = JSON.parse(legacy);
+        raw = JSON.stringify({ ...previous, completed: previous.completed ?? previous.done ?? [] });
+      }
+    }
     return normalizeState(raw ? JSON.parse(raw) : null, date);
   } catch {
     return createState(date);
