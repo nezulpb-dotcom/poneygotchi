@@ -10,7 +10,7 @@
 header{text-align:center;color:var(--gold);font-weight:900;letter-spacing:.2em;font-size:15px}header small{display:block;color:#a9b2cb;font-size:9px;margin-top:4px;letter-spacing:.15em}.toptools{display:flex;justify-content:center;margin-top:8px}.soundtoggle{border:1px solid #55627e;background:#202a43;color:#dce8ff;border-radius:20px;padding:6px 11px;font-size:9px;font-weight:800;cursor:pointer}
 .stage{height:142px;display:flex;justify-content:center;align-items:center;gap:30px;margin:10px 0;background:linear-gradient(#18213b,#10172a);border-radius:15px;position:relative;overflow:hidden}
 .stage:after{content:"";position:absolute;bottom:13px;width:85%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--gold),transparent);box-shadow:0 0 20px var(--cyan)}
-.stage.has-art{background-size:cover;background-position:center}.stage .licensed-sprite{width:min(82%,230px);height:136px;object-fit:contain;image-rendering:pixelated;z-index:1;position:relative;animation:bob 2.4s ease-in-out infinite}.stage .concert-visual{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.82}.artist-credit{position:absolute;right:7px;bottom:5px;z-index:2;padding:3px 6px;border-radius:4px;background:#050914cc;color:#fff;font-size:8px;letter-spacing:.04em;text-shadow:0 1px 2px #000}.robot{display:grid;justify-items:center;gap:5px;animation:bob 2.4s ease-in-out infinite}.robot:nth-child(2){animation-delay:-1.1s}
+.stage.has-art{background-size:cover;background-position:center}.stage .licensed-sprite{width:min(82%,230px);height:136px;object-fit:contain;image-rendering:pixelated;z-index:1;position:relative;animation:bob 2.4s ease-in-out infinite}.stage .concert-visual{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.82}.themebar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:-3px 0 10px}.themebar button{border:1px solid #465473;background:#131c30;color:#cbd5e9;border-radius:8px;padding:7px 10px;font-size:9px;font-weight:800;cursor:pointer}.themebar button[aria-pressed=true]{border-color:var(--gold);color:var(--gold);box-shadow:0 0 10px #f4c95d33}.themebar button:disabled{opacity:.35;cursor:not-allowed}.artist-credit{position:absolute;right:7px;bottom:5px;z-index:2;padding:3px 6px;border-radius:4px;background:#050914cc;color:#fff;font-size:8px;letter-spacing:.04em;text-shadow:0 1px 2px #000}.robot{display:grid;justify-items:center;gap:5px;animation:bob 2.4s ease-in-out infinite}.robot:nth-child(2){animation-delay:-1.1s}
 .helmet{width:69px;height:65px;border-radius:21px 21px 16px 16px;border:3px solid #cbd2e2;background:linear-gradient(145deg,#fff,#8b98b3);position:relative;box-shadow:inset -7px -6px #59647b,0 0 16px #d8e7ff33}
 .gold .helmet{background:linear-gradient(145deg,#fff0ae,#d5a337 65%,#79521d);border-color:#ffe7a0}
 .visor{position:absolute;left:7px;right:7px;top:23px;height:17px;border-radius:4px;background:#10182a;border:1px solid #62728d;box-shadow:0 0 9px var(--cyan)}
@@ -39,6 +39,7 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 <div class="robot"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>CHROME</small></div>
 <div class="robot gold"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>GOLD</small></div>
 <span class="artist-credit" id="artistCredit">Pixel art : Alexis Bee</span></section>
+<nav class="themebar" id="themeBar" aria-label="Univers visuels"><button data-theme="alive" aria-pressed="true">ALIVE 2007</button><button data-theme="ram" aria-pressed="false">RAM · 🔒</button><button data-theme="tron" aria-pressed="false">TRON · 🔒</button></nav>
 <div class="quote" id="quote">« On prépare quelque chose de spécial. »</div>
 <section class="meters" aria-label="Progression des trois jauges" aria-live="polite">
 <div class="meter"><div class="meterline"><span>✦ MORAL</span><span id="moralText">0%</span></div><div class="track"><div class="fill" id="moral"></div></div></div>
@@ -100,6 +101,10 @@ function applyPrivateAssets(){
 }
 applyPrivateAssets();
 const $=id=>document.getElementById(id);
+const themes={alive:{label:'ALIVE 2007',character:privateAssets.characterSprite,background:privateAssets.stageBackground},ram:{label:'RAM',character:privateAssets.ramCharacterSprite,background:privateAssets.ramStageBackground},tron:{label:'TRON',character:privateAssets.tronCharacterSprite,background:privateAssets.tronStageBackground}};
+function unlocked(theme){return theme==='alive'||(theme==='ram'&&state.concerts>=1)||(theme==='tron'&&state.concerts>=3);}
+function setTheme(theme){if(!unlocked(theme))return;state.theme=theme;const item=themes[theme],stage=$('characterStage');stage.querySelectorAll('.licensed-sprite').forEach(node=>node.remove());stage.querySelectorAll('.robot').forEach(node=>node.style.display='grid');if(item.character){const img=document.createElement('img');img.className='licensed-sprite';img.src=item.character;img.alt='Sprites '+item.label+' par Alexis Bee';img.onload=()=>stage.querySelectorAll('.robot').forEach(node=>node.style.display='none');img.onerror=()=>img.remove();stage.append(img);}stage.style.backgroundImage=item.background?`linear-gradient(#080b1880,#080b1880),url("${item.background}")`:'';stage.classList.toggle('has-art',!!item.background);save();renderThemes();}
+function renderThemes(){document.querySelectorAll('#themeBar button').forEach(b=>{const ok=unlocked(b.dataset.theme);b.disabled=!ok;b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme));b.textContent=themes[b.dataset.theme].label+(ok?'':b.dataset.theme==='ram'?' · 🔒 1 concert':' · 🔒 3 concerts');});}
 let state=loadState();
 let audioOn=true, audioContext=null;
 const noteHz={kick:78,clap:420,hat:1150,BASS:110,LEAD:660,PAD:440};
@@ -134,12 +139,14 @@ function render(){
  const ready=concertReady(state);$('concert').disabled=!ready;$('concert').classList.toggle('ready',ready);$('concert').textContent=ready?'★ OUVRIR LE CONCERT ★':'CONCERT VERROUILLÉ';
  $('quote').textContent=ready?'« Le public est là. À nous de jouer ! »':'« Chaque petit pas nous rapproche de la scène. »';
  for(const [k,v] of Object.entries(state.mix))$(k+'Value').textContent=v;
+ renderThemes();
  if(won('beat'))$('beatFeedback').textContent='✓ Beat validé !';
  if(won('memory'))$('memoryFeedback').textContent='✓ Mémoire parfaite !';
  if(won('mix'))$('mixFeedback').textContent='✓ Mix équilibré !';
 }
 $('dateLabel').textContent=dateKey();
 document.querySelectorAll('.mission').forEach(b=>b.addEventListener('click',()=>award(b.dataset.id)));
+document.querySelectorAll('#themeBar button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.theme)));
 const beatTarget=['kick','clap','kick','hat'];let beat=[];
 $('beatPads').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('beat'))return;tone(b.dataset.beat);beat.push(b.dataset.beat);if(beat.some((v,i)=>v!==beatTarget[i])){beat=[];$('beatFeedback').textContent='Oups, recommence la boucle !';return;}$('beatFeedback').textContent='Séquence : '+beat.length+'/4';if(beat.length===4)win('beat','music',40,$('beatFeedback'));}));
 const memTarget=['BASS','LEAD','PAD'];let mem=[];$('playMemory').addEventListener('click',playSequence);
@@ -148,6 +155,6 @@ $('mixControls').querySelectorAll('button').forEach(b=>b.addEventListener('click
 $('concert').addEventListener('click',()=>{if(!concertReady(state))return;const result=launchConcert(state);state=result.state;save();$('show').classList.add('show');$('showStatus').textContent='Initialisation des projecteurs…';tone('kick',.3);setTimeout(()=>{$('showStatus').textContent='Synchronisation des synthés…';tone('BASS',.3);},850);setTimeout(()=>{$('showStatus').textContent='Le public est prêt. Le concert commence !';tone('LEAD',.5);},1700);});
 $('close').addEventListener('click',()=>$('show').classList.remove('show'));
 $('reset').addEventListener('click',()=>{if(!confirm('Effacer la progression de cette démo ?'))return;state=createState();beat=[];mem=[];save();render();$('beatFeedback').textContent='Séquence : 0/4';$('memoryFeedback').textContent='0/3';$('mixFeedback').textContent='Ajuste chaque piste (1 → 2 → 3).';});
-render();save();
+render();setTheme(state.theme||'alive');save();
 </script>
 </body></html>
