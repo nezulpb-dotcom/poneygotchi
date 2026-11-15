@@ -7,7 +7,7 @@
 :root{color-scheme:dark;--bg:#080b18;--panel:#171e32;--line:#35415f;--gold:#f4c95d;--cyan:#65e6ed;--pink:#f278b5}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:12px;background:radial-gradient(ellipse at 50% 8%,#283252,#080b18 72%);color:#f4f4f7;font:14px system-ui,sans-serif;display:grid;place-items:center}
 .app{width:min(100%,390px);border:1px solid #53617f;border-radius:24px;padding:14px;background:linear-gradient(155deg,#171e35,#090d1b 75%);box-shadow:0 20px 65px #0009}
-header{text-align:center;color:var(--gold);font-weight:900;letter-spacing:.2em;font-size:15px}header small{display:block;color:#a9b2cb;font-size:9px;margin-top:4px;letter-spacing:.15em}
+header{text-align:center;color:var(--gold);font-weight:900;letter-spacing:.2em;font-size:15px}header small{display:block;color:#a9b2cb;font-size:9px;margin-top:4px;letter-spacing:.15em}.toptools{display:flex;justify-content:center;margin-top:8px}.soundtoggle{border:1px solid #55627e;background:#202a43;color:#dce8ff;border-radius:20px;padding:6px 11px;font-size:9px;font-weight:800;cursor:pointer}
 .stage{height:142px;display:flex;justify-content:center;align-items:center;gap:30px;margin:10px 0;background:linear-gradient(#18213b,#10172a);border-radius:15px;position:relative;overflow:hidden}
 .stage:after{content:"";position:absolute;bottom:13px;width:85%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--gold),transparent);box-shadow:0 0 20px var(--cyan)}
 .robot{display:grid;justify-items:center;gap:5px;animation:bob 2.4s ease-in-out infinite}.robot:nth-child(2){animation-delay:-1.1s}
@@ -25,12 +25,12 @@ header{text-align:center;color:var(--gold);font-weight:900;letter-spacing:.2em;f
 .game{background:#151c30;border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}.gamehead{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:900}.pill{font-size:9px;color:var(--cyan)}.game p{font-size:10px;color:#aeb9d1;line-height:1.45;margin:6px 0}
 .actions{display:flex;gap:6px;flex-wrap:wrap}.actions button,.primary,.reset{border:1px solid #55627e;background:#202a43;color:#f5f6fa;border-radius:8px;padding:8px 10px;font-weight:800;font-size:10px;cursor:pointer}.actions button:disabled{opacity:.4}.primary{width:100%;padding:13px;margin-top:10px;background:#3b435a;color:#9ca8bf;border:0;letter-spacing:.15em}.primary.ready{background:linear-gradient(90deg,#f1b83d,#f278b5);color:#17101d;cursor:pointer}.feedback{min-height:15px;font-size:10px;color:var(--cyan);margin-top:5px}
 footer{display:flex;justify-content:space-between;align-items:center;margin-top:9px;color:#78839d;font-size:9px}.reset{font-size:9px;padding:5px 8px}
-.overlay{position:fixed;inset:0;background:#070a15f5;display:none;place-items:center;text-align:center;padding:25px;z-index:5}.overlay.show{display:grid}.showbox{max-width:340px}.lights{font-size:42px;animation:flash .6s infinite alternate}@keyframes flash{to{filter:drop-shadow(0 0 20px var(--pink));transform:scale(1.08)}}.showbox h2{color:var(--gold);letter-spacing:.18em}.showbox button{padding:11px 18px;border:1px solid var(--gold);border-radius:9px;background:#171e32;color:white}
+.overlay{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#263b67,#070a15 70%);display:none;place-items:center;text-align:center;padding:25px;z-index:5;overflow:hidden}.overlay.show{display:grid;animation:curtain .7s ease-out}.showbox{max-width:340px;position:relative;z-index:2}.lights{font-size:42px;animation:flash .6s infinite alternate}.laser{position:absolute;inset:-30%;background:repeating-conic-gradient(from 0deg at 50% 45%,#65e6ed22 0 5deg,transparent 5deg 18deg,#f4c95d20 18deg 23deg,transparent 23deg 36deg);animation:spin 18s linear infinite}.showbox h2{animation:titlepop 1s .5s both}@keyframes curtain{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:scale(1)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes titlepop{from{opacity:0;letter-spacing:.8em;transform:scale(.7)}to{opacity:1;letter-spacing:.18em;transform:scale(1)}}.showbox h2{color:var(--gold);letter-spacing:.18em}.showbox button{padding:11px 18px;border:1px solid var(--gold);border-radius:9px;background:#171e32;color:white}
 </style>
 </head>
 <body>
 <main class="app">
-<header>DAFT PUNK<small>DAILY LIFE × MUSIC LAB · <span id="dateLabel"></span></small></header>
+<header>DAFT PUNK<small>DAILY LIFE × MUSIC LAB · <span id="dateLabel"></span></small><div class="toptools"><button class="soundtoggle" id="soundToggle" aria-pressed="true">♫ SON ACTIVÉ</button></div></header>
 <section class="stage" aria-label="Deux robots originaux du prototype">
 <div class="robot"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>CHROME</small></div>
 <div class="robot gold"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>GOLD</small></div>
@@ -62,7 +62,7 @@ footer{display:flex;justify-content:space-between;align-items:center;margin-top:
 </section>
 <section class="game">
 <div class="gamehead"><span>🧠 SYNTH MEMORY</span><span class="pill">+30 MUSIQUE</span></div>
-<p>Mémorise la séquence affichée, puis reproduis-la dans le même ordre.</p>
+<p>Écoute la séquence, mémorise-la, puis reproduis-la dans le même ordre.</p><div class="actions"><button id="playMemory">▶ ÉCOUTER LA SÉQUENCE</button></div>
 <div id="memoryPrompt" class="feedback">Séquence : BASS → LEAD → PAD</div>
 <div class="actions" id="memoryPads"><button data-tone="BASS">BASS</button><button data-tone="LEAD">LEAD</button><button data-tone="PAD">PAD</button></div>
 <div class="feedback" id="memoryFeedback">0/3</div>
@@ -78,11 +78,34 @@ footer{display:flex;justify-content:space-between;align-items:center;margin-top:
 <button class="primary" id="concert" disabled>CONCERT VERROUILLÉ</button>
 <footer><span id="saveStatus">Sauvegarde locale activée</span><button class="reset" id="reset">Réinitialiser la démo</button></footer>
 </main>
-<div class="overlay" id="show"><div class="showbox"><div class="lights">✦ ♫ ✧</div><h2>ONE MORE TIME!</h2><p>Les robots sont prêts. Les lumières s'allument. La soirée peut commencer !</p><button id="close">RETOUR EN COULISSES</button></div></div>
+<div class="overlay" id="show"><div class="laser"></div><div class="showbox"><div class="lights">✦ ♫ ✧</div><h2>ONE MORE TIME!</h2><p id="showStatus">Initialisation des projecteurs…</p><button id="close">RETOUR EN COULISSES</button></div></div>
 <script type="module">
 import { createState, dateKey, loadState, saveState, completeQuest, awardMiniGame, concertReady, launchConcert } from './game.js';
 const $=id=>document.getElementById(id);
 let state=loadState();
+let audioOn=true, audioContext=null;
+const noteHz={kick:78,clap:420,hat:1150,BASS:110,LEAD:660,PAD:440};
+function tone(name,duration=.13){
+ if(!audioOn)return;
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+  audioContext ||= new Ctx();if(audioContext.state==='suspended')audioContext.resume();
+  const osc=audioContext.createOscillator(),gain=audioContext.createGain(),now=audioContext.currentTime;
+  osc.type=name==='kick'?'sine':name==='hat'?'square':'triangle';
+  osc.frequency.setValueAtTime(noteHz[name]||440,now);
+  if(name==='kick')osc.frequency.exponentialRampToValueAtTime(42,now+.12);
+  gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(name==='hat'?.045:.12,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+duration+.02);
+ }catch{}
+}
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function playSequence(){
+ if(!audioOn){$('memoryFeedback').textContent='Active le son pour écouter la séquence.';return;}
+ $('playMemory').disabled=true;
+ for(const n of memTarget){tone(n,.22);$('memoryPrompt').textContent='Écoute : '+n;await sleep(520);}
+ $('memoryPrompt').textContent='À toi : BASS → LEAD → PAD';$('playMemory').disabled=false;
+}
+$('soundToggle').addEventListener('click',()=>{audioOn=!audioOn;$('soundToggle').textContent=audioOn?'♫ SON ACTIVÉ':'♪ SON COUPÉ';$('soundToggle').setAttribute('aria-pressed',String(audioOn));if(audioOn)tone('PAD');});
 const save=()=>{saveState(state);$('saveStatus').textContent='Progression sauvegardée';};
 const award=(id)=>{const result=completeQuest(state,id);state=result.state;if(result.ok)save();render();};
 const won=id=>state.wins.includes(id);
@@ -100,11 +123,11 @@ function render(){
 $('dateLabel').textContent=dateKey();
 document.querySelectorAll('.mission').forEach(b=>b.addEventListener('click',()=>award(b.dataset.id)));
 const beatTarget=['kick','clap','kick','hat'];let beat=[];
-$('beatPads').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('beat'))return;beat.push(b.dataset.beat);if(beat.some((v,i)=>v!==beatTarget[i])){beat=[];$('beatFeedback').textContent='Oups, recommence la boucle !';return;}$('beatFeedback').textContent='Séquence : '+beat.length+'/4';if(beat.length===4)win('beat','music',40,$('beatFeedback'));}));
-const memTarget=['BASS','LEAD','PAD'];let mem=[];
-$('memoryPads').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('memory'))return;mem.push(b.dataset.tone);if(mem.some((v,i)=>v!==memTarget[i])){mem=[];$('memoryFeedback').textContent='Pas tout à fait. Recommence !';return;}$('memoryFeedback').textContent=mem.length+'/3';if(mem.length===3)win('memory','music',30,$('memoryFeedback'));}));
-$('mixControls').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('mix'))return;const k=b.dataset.track;state.mix[k]=state.mix[k]%3+1;const vals=Object.values(state.mix);$('mixFeedback').textContent='Bass '+state.mix.bass+' · Lead '+state.mix.lead+' · Beat '+state.mix.beat;if(vals.every(v=>v===2))win('mix','inspiration',30,$('mixFeedback'));save();render();}));
-$('concert').addEventListener('click',()=>{if(!concertReady(state))return;const result=launchConcert(state);state=result.state;save();$('show').classList.add('show');});
+$('beatPads').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('beat'))return;tone(b.dataset.beat);beat.push(b.dataset.beat);if(beat.some((v,i)=>v!==beatTarget[i])){beat=[];$('beatFeedback').textContent='Oups, recommence la boucle !';return;}$('beatFeedback').textContent='Séquence : '+beat.length+'/4';if(beat.length===4)win('beat','music',40,$('beatFeedback'));}));
+const memTarget=['BASS','LEAD','PAD'];let mem=[];$('playMemory').addEventListener('click',playSequence);
+$('memoryPads').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('memory'))return;tone(b.dataset.tone);mem.push(b.dataset.tone);if(mem.some((v,i)=>v!==memTarget[i])){mem=[];$('memoryFeedback').textContent='Pas tout à fait. Recommence !';return;}$('memoryFeedback').textContent=mem.length+'/3';if(mem.length===3)win('memory','music',30,$('memoryFeedback'));}));
+$('mixControls').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(won('mix'))return;const k=b.dataset.track;state.mix[k]=state.mix[k]%3+1;tone(k==='bass'?'BASS':k==='lead'?'LEAD':'kick');const vals=Object.values(state.mix);$('mixFeedback').textContent='Bass '+state.mix.bass+' · Lead '+state.mix.lead+' · Beat '+state.mix.beat;if(vals.every(v=>v===2))win('mix','inspiration',30,$('mixFeedback'));save();render();}));
+$('concert').addEventListener('click',()=>{if(!concertReady(state))return;const result=launchConcert(state);state=result.state;save();$('show').classList.add('show');$('showStatus').textContent='Initialisation des projecteurs…';tone('kick',.3);setTimeout(()=>{$('showStatus').textContent='Synchronisation des synthés…';tone('BASS',.3);},850);setTimeout(()=>{$('showStatus').textContent='Le public est prêt. Le concert commence !';tone('LEAD',.5);},1700);});
 $('close').addEventListener('click',()=>$('show').classList.remove('show'));
 $('reset').addEventListener('click',()=>{if(!confirm('Effacer la progression de cette démo ?'))return;state=createState();beat=[];mem=[];save();render();$('beatFeedback').textContent='Séquence : 0/4';$('memoryFeedback').textContent='0/3';$('mixFeedback').textContent='Ajuste chaque piste (1 → 2 → 3).';});
 render();save();
