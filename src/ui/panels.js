@@ -30,6 +30,8 @@ export function renderPanel(tab, game, memoryRound = null) {
         <div class="task"><span>💧 Pause eau (${daily.water})</span>${questButton('water', false, 'J’ai bu')}</div>
         <div class="task"><span>🌿 Bouger un peu</span>${questButton('movement', daily.movement)}</div>
         <div class="task"><span>☁️ Faire une pause</span>${questButton('pause', daily.pause)}</div>
+        <div class="task"><span>✨ Luciole du soir</span><b>${daily.fireflyFound ? 'Vue ce soir' : daily.fireflyStep ? 'Suivie · 1/2' : 'À découvrir la nuit'}</b></div>
+        <p class="panel-small">Une petite lueur apparaît dans la prairie la nuit. Touche-la, puis retrouve-la de l’autre côté pour terminer la découverte.</p>
         <p class="panel-small">Pas de quantité d’eau prescrite. Les trois premières confirmations donnent une récompense ; les suivantes restent enregistrées.</p>`;
     }
     case 'shop':

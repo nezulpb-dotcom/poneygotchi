@@ -7,6 +7,16 @@ html = (root/'preview-offline.html').read_text('utf-8')
 with sync_playwright() as pw:
     browser = pw.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page(viewport={'width': 760, 'height': 850}, device_scale_factor=1)
+    fixed_clock = """const NativeDate = Date;
+const fixedNow = new NativeDate(2026, 10, 15, 22, 0, 0).getTime();
+class FixedDate extends NativeDate {
+  constructor(...args) { super(...(args.length ? args : [fixedNow])); }
+  static now() { return fixedNow; }
+}
+globalThis.Date = FixedDate;"""
+    marker = '<script>\nconst SPRITE_DATA ='
+    assert marker in html, 'standalone preview script marker missing'
+    html = html.replace(marker, '<script>\n' + fixed_clock + '\nconst SPRITE_DATA =', 1)
     errors=[]
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.set_content(html, wait_until='load')
@@ -16,6 +26,28 @@ with sync_playwright() as pw:
     expected_date = page.evaluate("new Date().toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })")
     assert page.locator('#todayDate').inner_text() == expected_date
     assert page.locator('#hud').get_attribute('aria-hidden') == 'true'
+    firefly = page.locator('#fireflyTap')
+    assert page.evaluate('new Date().getHours()') == 22, 'test clock must be fixed at 22:00'
+    assert page.locator('#screen').get_attribute('data-scene') == 'night'
+    assert firefly.is_visible(), 'night firefly should be available on the lockscreen'
+    page.emulate_media(reduced_motion='reduce')
+    reduced_transition = firefly.evaluate('(el) => getComputedStyle(el).transitionDuration')
+    assert reduced_transition in ('0s', '0s, 0s'), 'firefly movement must respect reduced-motion preference'
+    page.emulate_media(reduced_motion='no-preference')
+    target_box = firefly.bounding_box()
+    assert target_box['width'] == 56 and target_box['height'] == 56, 'firefly touch target should be comfortable on a resistive screen'
+    firefly.click()
+    assert firefly.get_attribute('data-step') == '1'
+    assert 'trail-second' in (firefly.get_attribute('class') or '')
+    assert 's’envole' in page.locator('#bubble').inner_text().lower()
+    assert firefly.get_attribute('aria-label') == 'Retrouver la luciole de l’autre côté'
+    assert page.locator('#ponyWrap').get_attribute('data-pose') == 'curious'
+    page.wait_for_timeout(450)
+    firefly.click()
+    assert firefly.get_attribute('data-step') == '2'
+    assert 'étoiles' in page.locator('#bubble').inner_text().lower()
+    page.wait_for_timeout(1000)
+    assert not firefly.is_visible(), 'a completed firefly trail should not repeat the same evening'
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_lockscreen.png'))
     page.locator('#screenTap').click(position={'x':24,'y':215})
     assert page.locator('#hud').get_attribute('aria-hidden') == 'false'
@@ -44,6 +76,8 @@ with sync_playwright() as pw:
     assert page.locator('#ponyWrap').get_attribute('data-pose') == 'play'
     page.locator('#openMenu').click()
     assert page.locator('#sheetWrap').get_attribute('aria-hidden') == 'false'
+    assert 'Luciole du soir' in page.locator('#sheetContent').inner_text()
+    assert 'Vue ce soir' in page.locator('#sheetContent').inner_text()
     page.locator('[data-tab="shop"]').click()
     assert page.locator('.shop-item').count() >= 4
     page.locator('[data-tab="missions"]').click()

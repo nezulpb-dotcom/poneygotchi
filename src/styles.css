@@ -178,3 +178,23 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   .memory-hint { min-height: 32px; margin-bottom: 4px; }
   .panel-small { margin: 5px 0; font-size: 9px; }
 }
+
+
+/* A single discoverable firefly: hidden outside the night scene and never covers Rosy. */
+.firefly-target { position: absolute; z-index: 6; left: 262px; top: 326px; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #fff7bd; cursor: pointer; }
+.firefly-target[hidden] { display: none !important; }
+.firefly-target::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: #fff9bf; box-shadow: 0 0 8px 4px #fff2a2b0; animation: firefly 3.2s ease-in-out infinite; }
+.firefly-target::after { content: '✧'; position: absolute; inset: 0; display: grid; place-items: center; color: #fff7bd; font-size: 20px; line-height: 1; text-shadow: 0 0 8px #fff3a8, 0 0 15px #fff7bd; }
+.firefly-target.found::before { animation: firefly-caught .9s ease-out both; }
+.firefly-target:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@keyframes firefly-caught { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: translate(18px,-22px) scale(2.4); } }
+@media(prefers-reduced-motion:reduce) { .firefly-target::before, .firefly-target.found::before { animation: none !important; } .firefly-target.found::before { opacity: .25; } }
+
+
+/* Large, separated touch target for the two-step evening firefly trail. */
+.firefly-target { left: 252px; top: 315px; width: 56px; height: 56px; transition: left .38s ease, top .38s ease; }
+.firefly-target.trail-second { left: 12px; top: 286px; }
+.firefly-target::before { inset: 21px; }
+.firefly-target::after { font-size: 22px; }
+
+@media(prefers-reduced-motion:reduce) { .firefly-target { transition: none !important; } }
