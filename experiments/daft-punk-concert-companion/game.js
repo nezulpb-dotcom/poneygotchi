@@ -15,7 +15,7 @@ export const dateKey = (date = new Date()) =>
 export function createState(date = new Date()) {
   return { version: 1, date: dateKey(date), completed: [], wins: [],
     stats: { moral: 0, music: 0, inspiration: 0 }, concerts: 0,
-    mix: { bass: 1, lead: 1, beat: 1 } };
+    mix: { bass: 1, lead: 1, beat: 1 }, theme: 'alive' };
 }
 
 export function normalizeState(raw, date = new Date()) {
@@ -36,6 +36,7 @@ export function normalizeState(raw, date = new Date()) {
       key, Math.max(0, Math.min(100, Math.floor(Number(stats[key]) || 0))),
     ])),
     concerts: Math.max(0, Math.floor(Number(raw.concerts) || 0)),
+    theme: ['alive', 'ram', 'tron'].includes(raw.theme) ? raw.theme : 'alive',
     mix: Object.fromEntries(['bass', 'lead', 'beat'].map((key) => [
       key, Math.max(1, Math.min(3, Math.floor(Number(mix[key]) || 1))),
     ])),
