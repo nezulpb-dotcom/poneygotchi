@@ -1,49 +1,41 @@
-# Daft Punk — Concert Tonight
+# Daft Punk — Daily Life & Music Lab
 
-Prototype autonome de compagnon musical pour le CrowPanel DIS05035H V2.2.
+Bêta navigateur 0.3 du compagnon musical pour le CrowPanel DIS05035H V2.2.
 
-## Boucle de jeu
+## Nouveautés de la bêta 0.3
 
-Pendant la journée, les deux robots préparent leur prochain concert. Le joueur accomplit des missions pour remplir trois jauges indépendantes :
+- **Missions IRL** : hydratation, repas varié, mouvement doux, pause sans écran, capture d'une idée et rangement d'un petit espace. Elles sont validées manuellement, sans preuve ni pénalité.
+- **Beat Sequencer** : reproduire une boucle de quatre frappes (kick, clap, kick, hat).
+- **Synth Memory** : reproduire une séquence de trois sons dans le bon ordre.
+- **Mix Console** : équilibrer basse, lead et beat.
+- **Sauvegarde locale** via localStorage.
+- **Renouvellement quotidien** : les missions cochées et victoires des mini-jeux sont réinitialisées au changement de date locale ; les jauges déjà gagnées sont conservées.
+- **Concert** : déverrouillage lorsque Moral, Musique et Inspiration atteignent chacun 100 %.
 
-- **Moral** : énergie, complicité et enthousiasme des robots.
-- **Musique** : préparation du set, rythmes et transitions.
-- **Inspiration** : idées de scénographie, lumières et surprises.
+## Tester
 
-Lorsque les trois jauges atteignent 100 %, le bouton de concert se déverrouille. Le concert devient le moment fort de la session.
+Ouvrir `index.html` dans un navigateur récent. Aucun serveur ni dépendance externe n'est requis. La progression est enregistrée sur le navigateur utilisé. Le bouton « Réinitialiser la démo » efface cette progression après confirmation.
 
-## Prototype jouable
+## Règles de jeu
 
-Ouvrir `index.html` dans un navigateur. La démo permet de terminer six missions, de remplir les trois jauges et de déclencher l'écran de concert. La progression est volontairement une simulation de démonstration : elle n'est pas encore sauvegardée et les quêtes ne sont pas encore liées à l'heure réelle.
+Les actions de vie réelle sont des suggestions de bien-être ordinaires, jamais des prescriptions. Le joueur les valide librement. Aucune preuve, donnée de santé ou information personnelle n'est collectée. Les missions manquées ne retirent aucun point. Le prototype ne récompense pas la restriction alimentaire, l'exercice excessif ou la consommation forcée d'eau.
 
-## Direction artistique
+## Direction artistique et droits
 
-- Univers nocturne de coulisses, scène électronique, LEDs, lasers et panneaux lumineux.
-- Deux silhouettes robotiques originales dessinées en CSS pour le prototype.
-- Interface portrait conçue pour 320 × 480 pixels.
-- Animations sobres pour préserver les ressources de l'ESP32.
-- Aucun extrait musical commercial intégré ; les premiers sons seront des créations originales synthétiques ou des fichiers pour lesquels les droits sont disponibles.
+Les robots du prototype sont des formes CSS originales et ne sont pas des reproductions des sprites sous licence. Les assets Internet Bee sont référencés ici : https://internetbee.neocities.org/archive/2024/featured_051224. Leur intégration dans une distribution devra respecter la licence payante et les obligations d'attribution communiquées par le titulaire des droits. La vidéo d'ouverture du concert n'est pas encore intégrée. Aucun morceau Daft Punk ni extrait commercial n'est embarqué.
 
-## Assets Internet Bee
+## Limites actuelles
 
-Référence : https://internetbee.neocities.org/archive/2024/featured_051224
+- La progression est sauvegardée dans le navigateur, pas synchronisée entre appareils.
+- Les jauges sont persistantes et ne diminuent pas ; le changement de date renouvelle les missions et mini-jeux.
+- Le changement de date utilise la date locale du navigateur.
+- Les sons des mini-jeux sont visuels seulement à ce stade.
+- Aucun portage firmware, build ESP32, test matériel ou flash CrowPanel n'a été effectué.
+- La preview ne constitue pas encore un lecteur vidéo embarqué.
 
-La page présente neuf sprites animés des différentes ères visuelles de Daft Punk. La licence affichée est **CC BY-NC-ND 4.0**. En conséquence, ce dépôt ne copie, ne modifie et ne redistribue pas ces images. Leur intégration éventuelle nécessite de respecter les conditions applicables et d'obtenir une autorisation lorsque nécessaire. Le prototype utilise des silhouettes CSS originales en attendant.
+## Prochaines étapes
 
-## Portage CrowPanel — étapes suivantes
-
-1. Séparer le moteur de progression de l'interface.
-2. Porter l'affichage vers le pilote ILI9488 du CrowPanel (320 × 480).
-3. Remplacer les éléments DOM par des composants graphiques légers.
-4. Ajouter sauvegarde locale des jauges et missions terminées.
-5. Concevoir un catalogue de quêtes renouvelées quotidiennement, sans pénalité si une journée est manquée.
-6. Ajouter une séquence de concert avec animation de scène et sons originaux.
-7. Vérifier la mémoire PSRAM, la fluidité et le tactile en simulation puis sur appareil.
-
-## Sécurité et isolation
-
-Ce projet reste dans `experiments/daft-punk-concert-companion/`. Il ne modifie pas les sources, les sauvegardes, les assets ou la configuration de PonyGotchi. Aucun flash matériel, formatage SD ou effacement n'est effectué.
-
-## Statut
-
-Prototype navigateur jouable créé. Portage firmware et validation physique non réalisés.
+1. Ajouter des sons synthétiques originaux et une meilleure sensation rythmique.
+2. Concevoir un catalogue de missions quotidiennes variables.
+3. Préparer la séquence d'ouverture du concert avec le format média adapté au CrowPanel.
+4. Porter le moteur et l'interface vers l'ESP32 / ILI9488 en préservant les ressources et sauvegardes de PonyGotchi.
