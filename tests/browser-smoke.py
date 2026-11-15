@@ -7,6 +7,15 @@ html = (root/'preview-offline.html').read_text('utf-8')
 with sync_playwright() as pw:
     browser = pw.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page(viewport={'width': 760, 'height': 850}, device_scale_factor=1)
+    page.add_init_script("""\
+const NativeDate = Date;
+const fixedNow = new NativeDate(2026, 10, 15, 22, 0, 0).getTime();
+class FixedDate extends NativeDate {
+  constructor(...args) { super(...(args.length ? args : [fixedNow])); }
+  static now() { return fixedNow; }
+}
+globalThis.Date = FixedDate;
+""")
     errors=[]
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.set_content(html, wait_until='load')
@@ -16,6 +25,13 @@ with sync_playwright() as pw:
     expected_date = page.evaluate("new Date().toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })")
     assert page.locator('#todayDate').inner_text() == expected_date
     assert page.locator('#hud').get_attribute('aria-hidden') == 'true'
+    firefly = page.locator('#fireflyTap')
+    assert firefly.is_visible(), 'night firefly should be available on the lockscreen'
+    firefly.click()
+    assert 'luciole' in page.locator('#bubble').inner_text().lower()
+    assert page.locator('#ponyWrap').get_attribute('data-pose') == 'curious'
+    page.wait_for_timeout(1000)
+    assert not firefly.is_visible(), 'a discovered firefly should not repeat the same evening'
     page.locator('#screen').screenshot(path=str(root/'docs'/'preview_lockscreen.png'))
     page.locator('#screenTap').click(position={'x':24,'y':215})
     assert page.locator('#hud').get_attribute('aria-hidden') == 'false'
@@ -44,6 +60,8 @@ with sync_playwright() as pw:
     assert page.locator('#ponyWrap').get_attribute('data-pose') == 'play'
     page.locator('#openMenu').click()
     assert page.locator('#sheetWrap').get_attribute('aria-hidden') == 'false'
+    assert 'Luciole du soir' in page.locator('#sheetContent').inner_text()
+    assert 'Vue ce soir' in page.locator('#sheetContent').inner_text()
     page.locator('[data-tab="shop"]').click()
     assert page.locator('.shop-item').count() >= 4
     page.locator('[data-tab="missions"]').click()
