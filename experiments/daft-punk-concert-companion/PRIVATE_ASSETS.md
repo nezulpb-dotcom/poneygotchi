@@ -1,24 +1,29 @@
 # Ressources graphiques privées — Alexis Bee
 
-Les conditions confirmées par courriel autorisent l'utilisation des fichiers du site pour ce projet, sans usage commercial, à condition qu'ils ne soient pas rendus librement accessibles sur GitHub et qu'Alexis Bee soit crédité visiblement dans le projet.
+Les ressources ont été retrouvées dans le dépôt privé `nezulpb-dotcom/daft-punk-private-assets`. La racine contient 24 fichiers (dont 23 ressources GIF et le README), pour environ 2,53 Mo. Les variantes comprennent des personnages animés, des décors et un visuel de concert.
 
-## Règles de dépôt
+## Intégration locale
 
-- Ne jamais ajouter les GIF, images, vidéos ou autres fichiers originaux au dépôt GitHub.
-- Ne jamais publier de spritesheets dérivées, conversions, miniatures ou exports qui rendent les créations récupérables.
+- Ne jamais ajouter les GIF, images, vidéos ou autres fichiers originaux au dépôt public.
 - Conserver les fichiers dans `private-assets/` sur la machine de développement uniquement. Ce dossier est ignoré par Git.
-- Copier `assets.local.example.js` vers `assets.local.js`, puis adapter les chemins locaux. `assets.local.js` est également ignoré par Git.
+- Copier `assets.local.example.js` vers `assets.local.js`, puis adapter les chemins si les fichiers sont rangés autrement. `assets.local.js` est également ignoré par Git.
 - Le code public charge les ressources locales seulement si ce fichier de configuration existe. Sans lui, la démo conserve ses personnages provisoires.
 - Le crédit « Pixel art : Alexis Bee » reste visible dans la scène. Ne pas le masquer.
 
+## Fichiers sélectionnés pour le premier écran
+
+- `Daft-Punk_Alive-2007_2x.gif` : sprite animé réunissant les deux personnages, utilisé comme personnage principal de la scène.
+- `Daft-Punk_Alive-2007_bg.gif` : décor de scène Alive 2007.
+- `Daftendirektour_Rollin-And-Scratchin_visual.gif` : visuel animé optionnel affiché pendant l'écran du concert.
+
+Les fichiers `Daft-Punk_RAM_2x.gif`, `Daft-Punk_RAM_bg.gif`, `Daft-Punk_TRON_2x.gif` et `Daft-Punk_TRON_bg.gif` sont repérés comme variantes possibles pour de futurs thèmes.
+
 ## Limite de distribution
 
-Une page web publique qui charge directement ces images ou cette vidéo rendrait les fichiers récupérables par les visiteurs, même si le dépôt GitHub reste privé pour les assets. Ne pas publier une démo web utilisant les ressources sous licence sans accord complémentaire explicite sur l'hébergement et l'accès aux fichiers.
+Une page web publique qui charge directement ces images ou cette vidéo rendrait les fichiers récupérables par les visiteurs, même si le dépôt GitHub des assets reste privé. Cette intégration est donc prévue pour un lancement local avec les fichiers privés présents sur la machine, et non pour publier les ressources sous licence dans un déploiement public.
 
-## Vidéo
+## Vidéo et attribution
 
-Le chemin `concertVideo` est préparé dans la configuration locale, mais la vidéo n'est pas encore intégrée au lecteur du concert. Son usage comme cinématique d'ouverture doit être validé séparément si le courriel ne couvre pas explicitement cette vidéo.
-
-## Attribution
+Le GIF de visuel de concert est distinct de la vidéo MP4 initialement évoquée. Le lecteur MP4 n'est pas encore intégré ; son usage comme cinématique d'ouverture n'est pas présumé autorisé par les informations disponibles.
 
 Crédit visible dans le compagnon : **Pixel art : Alexis Bee**. Conserver également un lien vers https://internetbee.neocities.org/archive/2024/featured_051224 dans les crédits et la documentation du projet.
