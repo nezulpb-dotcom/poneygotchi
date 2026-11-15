@@ -196,3 +196,5 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .firefly-target.trail-second { left: 12px; top: 286px; }
 .firefly-target::before { inset: 21px; }
 .firefly-target::after { font-size: 22px; }
+
+@media(prefers-reduced-motion:reduce) { .firefly-target { transition: none !important; } }

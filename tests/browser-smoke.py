@@ -30,6 +30,10 @@ globalThis.Date = FixedDate;"""
     assert page.evaluate('new Date().getHours()') == 22, 'test clock must be fixed at 22:00'
     assert page.locator('#screen').get_attribute('data-scene') == 'night'
     assert firefly.is_visible(), 'night firefly should be available on the lockscreen'
+    page.emulate_media(reduced_motion='reduce')
+    reduced_transition = firefly.evaluate('(el) => getComputedStyle(el).transitionDuration')
+    assert reduced_transition in ('0s', '0s, 0s'), 'firefly movement must respect reduced-motion preference'
+    page.emulate_media(reduced_motion='no-preference')
     target_box = firefly.bounding_box()
     assert target_box['width'] == 56 and target_box['height'] == 56, 'firefly touch target should be comfortable on a resistive screen'
     firefly.click()
