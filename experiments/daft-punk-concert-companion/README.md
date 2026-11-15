@@ -1,6 +1,14 @@
 # Daft Punk — Daily Life & Music Lab
 
-Bêta navigateur 0.4 du compagnon musical pour le CrowPanel DIS05035H V2.2.
+Bêta navigateur 0.5 du compagnon musical pour le CrowPanel DIS05035H V2.2.
+
+## Nouveautés de la bêta 0.5
+
+- **Synthèse sonore originale** via Web Audio : kicks, claps, hats et notes de synthé générés dans le navigateur, sans échantillon musical protégé. Le son peut être coupé à tout moment.
+- **Mini-jeux audibles** : les pads du Beat Sequencer et de la Mix Console jouent leur son ; Synth Memory propose un bouton d'écoute avant la reproduction.
+- **Ouverture de concert** : rideau lumineux animé, faisceaux graphiques et séquence sonore originale en trois temps.
+- **Commandes tactiles** : zones d'appui agrandies sur les écrans tactiles, focus clavier visible et respect de la préférence système de réduction des animations.
+- **Progression et sauvegardes** : le moteur bêta 0.4 reste inchangé, avec migration des anciennes sauvegardes, jauges persistantes et renouvellement quotidien des missions/mini-jeux.
 
 ## Nouveautés de la bêta 0.3
 
