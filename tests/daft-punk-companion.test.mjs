@@ -42,7 +42,6 @@ test('missions and mini-games across two days unlock the concert', () => {
   state = completeQuest(state, 'tidy', tomorrow).state;
   state = awardMiniGame(state, 'beat', 'music', 40, tomorrow).state;
   state = awardMiniGame(state, 'memory', 'music', 30, tomorrow).state;
-  state.stats.music = 100;
   assert.equal(concertReady(state), true);
   const show = launchConcert(state);
   assert.equal(show.ok, true);
