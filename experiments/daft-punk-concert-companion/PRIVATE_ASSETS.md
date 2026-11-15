@@ -27,3 +27,11 @@ Une page web publique qui charge directement ces images ou cette vidéo rendrait
 Le GIF de visuel de concert est distinct de la vidéo MP4 initialement évoquée. Le lecteur MP4 n'est pas encore intégré ; son usage comme cinématique d'ouverture n'est pas présumé autorisé par les informations disponibles.
 
 Crédit visible dans le compagnon : **Pixel art : Alexis Bee**. Conserver également un lien vers https://internetbee.neocities.org/archive/2024/featured_051224 dans les crédits et la documentation du projet.
+
+## Thèmes visuels déblocables
+
+- **ALIVE 2007** est disponible dès le départ.
+- **RAM** se débloque après un premier concert terminé.
+- **TRON** se débloque après trois concerts terminés.
+- Le choix du thème est sauvegardé localement et conservé lors du renouvellement quotidien des missions.
+- Les quatre fichiers GIF RAM/TRON sont chargés depuis `private-assets/` via `assets.local.js`, jamais depuis le dépôt public.
