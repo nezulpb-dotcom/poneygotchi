@@ -81,3 +81,17 @@ test('storage failures do not crash the game', () => {
   assert.equal(saveState(createState(today), storage), true);
   assert.ok(memory.has(STORAGE_KEY));
 });
+
+test('beta 0.3 browser saves migrate without losing progress', () => {
+  const legacy = JSON.stringify({
+    date: '2026-11-15', done: ['water', 'meal'], wins: ['beat'],
+    stats: { moral: 40, music: 40, inspiration: 0 },
+    mix: { bass: 2, lead: 1, beat: 3 },
+  });
+  const storage = { getItem: (key) => key === 'daftpunk-companion-beta03' ? legacy : null, setItem() {} };
+  const state = loadState(storage, today);
+  assert.deepEqual(state.completed, ['water', 'meal']);
+  assert.deepEqual(state.wins, ['beat']);
+  assert.equal(state.stats.moral, 40);
+  assert.deepEqual(state.mix, { bass: 2, lead: 1, beat: 3 });
+});
