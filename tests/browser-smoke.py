@@ -14,9 +14,9 @@ class FixedDate extends NativeDate {
   static now() { return fixedNow; }
 }
 globalThis.Date = FixedDate;"""
-    marker = '<script>\\nconst SPRITE_DATA ='
+    marker = '<script>\nconst SPRITE_DATA ='
     assert marker in html, 'standalone preview script marker missing'
-    html = html.replace(marker, '<script>\\n' + fixed_clock + '\\nconst SPRITE_DATA =', 1)
+    html = html.replace(marker, '<script>\n' + fixed_clock + '\nconst SPRITE_DATA =', 1)
     errors=[]
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.set_content(html, wait_until='load')
