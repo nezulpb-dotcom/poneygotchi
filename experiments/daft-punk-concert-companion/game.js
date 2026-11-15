@@ -1,12 +1,13 @@
 export const STORAGE_KEY = 'daft-punk-concert-companion-v1';
 
 export const QUESTS = [
-  { id: 'water', stat: 'moral', gain: 20 },
-  { id: 'meal', stat: 'moral', gain: 20 },
-  { id: 'move', stat: 'moral', gain: 20 },
-  { id: 'pause', stat: 'moral', gain: 20 },
-  { id: 'idea', stat: 'inspiration', gain: 25 },
-  { id: 'tidy', stat: 'inspiration', gain: 25 },
+  { id: 'water', stat: 'moral', gain: 25 },
+  { id: 'meal', stat: 'moral', gain: 25 },
+  { id: 'move', stat: 'moral', gain: 25 },
+  { id: 'pause', stat: 'moral', gain: 25 },
+  { id: 'idea', stat: 'inspiration', gain: 35 },
+  { id: 'tidy', stat: 'inspiration', gain: 35 },
+  { id: 'listen', stat: 'music', gain: 30 },
 ];
 
 export const dateKey = (date = new Date()) =>
