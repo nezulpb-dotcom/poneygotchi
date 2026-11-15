@@ -9,12 +9,12 @@ Bêta navigateur 0.4 du compagnon musical pour le CrowPanel DIS05035H V2.2.
 - **Synth Memory** : reproduire une séquence de trois sons dans le bon ordre.
 - **Mix Console** : équilibrer basse, lead et beat.
 - **Sauvegarde locale** via un moteur JavaScript indépendant (`game.js`) et localStorage ; les données sont normalisées et les jauges sont bornées entre 0 et 100.
-- **Renouvellement quotidien** : les missions cochées et victoires des mini-jeux sont réinitialisées au changement de date locale ; les jauges déjà gagnées sont conservées.
+- **Renouvellement quotidien** : les missions cochées et victoires des mini-jeux sont réinitialisées au changement de date locale ; les jauges déjà gagnées sont conservées.\n- **Migration de sauvegarde** : les progressions du prototype bêta 0.3 sont reprises automatiquement dans le nouveau moteur.
 - **Concert** : déverrouillage lorsque Moral, Musique et Inspiration atteignent chacun 100 % ; le nombre de concerts lancés est conservé.
 
 ## Tester
 
-Ouvrir `index.html` dans un navigateur récent via un serveur local (les modules JavaScript ES nécessitent un contexte HTTP). La progression est enregistrée sur le navigateur utilisé. Le bouton « Réinitialiser la démo » efface cette progression après confirmation. Les tests du moteur sont dans `tests/daft-punk-companion.test.mjs` et s'exécutent avec `node --test tests/daft-punk-companion.test.mjs` ou via `npm test` à la racine.
+Ouvrir `index.html` dans un navigateur récent via un serveur local (les modules JavaScript ES nécessitent un contexte HTTP). La progression est enregistrée sur le navigateur utilisé. Le bouton « Réinitialiser la démo » efface cette progression après confirmation. Les huit tests du moteur sont dans `tests/daft-punk-companion.test.mjs` et s'exécutent avec `node --test tests/daft-punk-companion.test.mjs` ou via `npm test` à la racine.
 
 ## Règles de jeu
 
