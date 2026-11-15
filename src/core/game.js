@@ -15,7 +15,7 @@ export const localDateKey = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 export function emptyDay(date = new Date()) {
-  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false };
+  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false, fireflyFound: false };
 }
 
 export function newGame(date = new Date()) {
@@ -56,6 +56,14 @@ export function restoreGame(raw, date = new Date()) {
 
 export function advanceDay(game, date = new Date()) {
   if (game.daily.date !== localDateKey(date)) game.daily = emptyDay(date);
+}
+
+// A quiet evening discovery: no currency or XP, just a memory for today.
+export function discoverFirefly(game, date = new Date()) {
+  advanceDay(game, date);
+  if (game.daily.fireflyFound) return { ok: false, reason: 'already-found' };
+  game.daily.fireflyFound = true;
+  return { ok: true, day: game.daily.date };
 }
 
 export function grant(game, { stars = 0, xp = 0 } = {}) {
