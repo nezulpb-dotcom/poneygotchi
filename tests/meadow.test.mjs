@@ -32,6 +32,15 @@ test('a new local day offers a fresh two-touch trail', () => {
   assert.equal(game.daily.fireflyFound, false);
 });
 
+test('an unfinished trail survives save restoration and can be completed', () => {
+  const game = newGame(firstNight);
+  followFirefly(game, firstNight);
+  const restored = restoreGame(JSON.parse(JSON.stringify(game)), firstNight);
+  assert.equal(restored.daily.fireflyStep, 1);
+  assert.equal(restored.daily.fireflyFound, false);
+  assert.equal(followFirefly(restored, firstNight).found, true);
+});
+
 test('older saves receive safe defaults for the trail fields', () => {
   const legacy = newGame(firstNight);
   delete legacy.daily.fireflyFound;
