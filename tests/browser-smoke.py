@@ -26,6 +26,18 @@ globalThis.Date = FixedDate;
     assert page.locator('#todayDate').inner_text() == expected_date
     assert page.locator('#hud').get_attribute('aria-hidden') == 'true'
     firefly = page.locator('#fireflyTap')
+    if not firefly.is_visible():
+        state = page.evaluate("""() => {
+          const target = document.querySelector('#fireflyTap');
+          const screen = document.querySelector('#screen');
+          return { date: new Date().toString(), hour: new Date().getHours(),
+            scene: screen?.dataset.scene, hidden: target?.hidden,
+            display: target ? getComputedStyle(target).display : null,
+            rect: target ? target.getBoundingClientRect().toJSON() : null,
+            body: document.body.innerText.slice(0, 120) };
+        }""")
+        print('Firefly diagnostic:', state)
+        print('Page errors before firefly assertion:', errors)
     assert firefly.is_visible(), 'night firefly should be available on the lockscreen'
     target_box = firefly.bounding_box()
     assert target_box['width'] == 56 and target_box['height'] == 56, 'firefly touch target should be comfortable on a resistive screen'
