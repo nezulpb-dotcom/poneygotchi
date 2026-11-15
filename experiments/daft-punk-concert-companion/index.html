@@ -10,7 +10,7 @@
 header{text-align:center;color:var(--gold);font-weight:900;letter-spacing:.2em;font-size:15px}header small{display:block;color:#a9b2cb;font-size:9px;margin-top:4px;letter-spacing:.15em}.toptools{display:flex;justify-content:center;margin-top:8px}.soundtoggle{border:1px solid #55627e;background:#202a43;color:#dce8ff;border-radius:20px;padding:6px 11px;font-size:9px;font-weight:800;cursor:pointer}
 .stage{height:142px;display:flex;justify-content:center;align-items:center;gap:30px;margin:10px 0;background:linear-gradient(#18213b,#10172a);border-radius:15px;position:relative;overflow:hidden}
 .stage:after{content:"";position:absolute;bottom:13px;width:85%;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--gold),transparent);box-shadow:0 0 20px var(--cyan)}
-.robot{display:grid;justify-items:center;gap:5px;animation:bob 2.4s ease-in-out infinite}.robot:nth-child(2){animation-delay:-1.1s}
+.stage.has-art{background-size:cover;background-position:center}.stage .licensed-sprite{width:88px;height:112px;object-fit:contain;image-rendering:pixelated;z-index:1;animation:bob 2.4s ease-in-out infinite}.stage .licensed-sprite:nth-of-type(2){animation-delay:-1.1s}.artist-credit{position:absolute;right:7px;bottom:5px;z-index:2;padding:3px 6px;border-radius:4px;background:#050914cc;color:#fff;font-size:8px;letter-spacing:.04em;text-shadow:0 1px 2px #000}.robot{display:grid;justify-items:center;gap:5px;animation:bob 2.4s ease-in-out infinite}.robot:nth-child(2){animation-delay:-1.1s}
 .helmet{width:69px;height:65px;border-radius:21px 21px 16px 16px;border:3px solid #cbd2e2;background:linear-gradient(145deg,#fff,#8b98b3);position:relative;box-shadow:inset -7px -6px #59647b,0 0 16px #d8e7ff33}
 .gold .helmet{background:linear-gradient(145deg,#fff0ae,#d5a337 65%,#79521d);border-color:#ffe7a0}
 .visor{position:absolute;left:7px;right:7px;top:23px;height:17px;border-radius:4px;background:#10182a;border:1px solid #62728d;box-shadow:0 0 9px var(--cyan)}
@@ -35,10 +35,10 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 <body>
 <main class="app">
 <header>DAFT PUNK<small>DAILY LIFE × MUSIC LAB · <span id="dateLabel"></span></small><div class="toptools"><button class="soundtoggle" id="soundToggle" aria-pressed="true">♫ SON ACTIVÉ</button></div></header>
-<section class="stage" aria-label="Deux robots originaux du prototype">
+<section class="stage" id="characterStage" aria-label="Les deux personnages du compagnon">
 <div class="robot"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>CHROME</small></div>
 <div class="robot gold"><div class="helmet"><div class="visor"></div></div><div class="torso"></div><small>GOLD</small></div>
-</section>
+<span class="artist-credit" id="artistCredit">Pixel art : Alexis Bee</span></section>
 <div class="quote" id="quote">« On prépare quelque chose de spécial. »</div>
 <section class="meters" aria-label="Progression des trois jauges" aria-live="polite">
 <div class="meter"><div class="meterline"><span>✦ MORAL</span><span id="moralText">0%</span></div><div class="track"><div class="fill" id="moral"></div></div></div>
@@ -85,6 +85,18 @@ button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 <div class="overlay" id="show"><div class="laser"></div><div class="showbox"><div class="lights">✦ ♫ ✧</div><h2>ONE MORE TIME!</h2><p id="showStatus">Initialisation des projecteurs…</p><button id="close">RETOUR EN COULISSES</button></div></div>
 <script type="module">
 import { createState, dateKey, loadState, saveState, completeQuest, awardMiniGame, concertReady, launchConcert } from './game.js';
+// Les ressources sous licence sont chargées uniquement depuis assets.local.js (ignoré par Git).
+let privateAssets={};
+try { privateAssets = await import('./assets.local.js'); } catch { /* Démo sans assets privés : aucune ressource sous licence n'est téléchargée. */ }
+const assetUrl = (value) => typeof value === 'string' && value.trim() ? value : null;
+function applyPrivateAssets(){
+ const stage=document.getElementById('characterStage');
+ const silver=assetUrl(privateAssets.silverSprite), gold=assetUrl(privateAssets.goldSprite), bg=assetUrl(privateAssets.stageBackground);
+ if(silver && gold){stage.querySelectorAll('.robot').forEach(node=>node.remove());[silver,gold].forEach((src,i)=>{const img=document.createElement('img');img.className='licensed-sprite';img.src=src;img.alt=i===0?'Personnage argenté, artwork Alexis Bee':'Personnage doré, artwork Alexis Bee';stage.append(img);});}
+ if(bg){stage.style.backgroundImage=`linear-gradient(#080b1880,#080b1880),url("${bg.replace(/["\\]/g,'')}")`;stage.classList.add('has-art');}
+ const credit=assetUrl(privateAssets.creditText);if(credit)document.getElementById('artistCredit').textContent=credit;
+}
+applyPrivateAssets();
 const $=id=>document.getElementById(id);
 let state=loadState();
 let audioOn=true, audioContext=null;
