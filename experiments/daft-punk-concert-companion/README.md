@@ -1,6 +1,6 @@
 # Daft Punk — Daily Life & Music Lab
 
-Bêta navigateur 0.3 du compagnon musical pour le CrowPanel DIS05035H V2.2.
+Bêta navigateur 0.4 du compagnon musical pour le CrowPanel DIS05035H V2.2.
 
 ## Nouveautés de la bêta 0.3
 
@@ -8,13 +8,13 @@ Bêta navigateur 0.3 du compagnon musical pour le CrowPanel DIS05035H V2.2.
 - **Beat Sequencer** : reproduire une boucle de quatre frappes (kick, clap, kick, hat).
 - **Synth Memory** : reproduire une séquence de trois sons dans le bon ordre.
 - **Mix Console** : équilibrer basse, lead et beat.
-- **Sauvegarde locale** via localStorage.
+- **Sauvegarde locale** via un moteur JavaScript indépendant (`game.js`) et localStorage ; les données sont normalisées et les jauges sont bornées entre 0 et 100.
 - **Renouvellement quotidien** : les missions cochées et victoires des mini-jeux sont réinitialisées au changement de date locale ; les jauges déjà gagnées sont conservées.
-- **Concert** : déverrouillage lorsque Moral, Musique et Inspiration atteignent chacun 100 %.
+- **Concert** : déverrouillage lorsque Moral, Musique et Inspiration atteignent chacun 100 % ; le nombre de concerts lancés est conservé.
 
 ## Tester
 
-Ouvrir `index.html` dans un navigateur récent. Aucun serveur ni dépendance externe n'est requis. La progression est enregistrée sur le navigateur utilisé. Le bouton « Réinitialiser la démo » efface cette progression après confirmation.
+Ouvrir `index.html` dans un navigateur récent via un serveur local (les modules JavaScript ES nécessitent un contexte HTTP). La progression est enregistrée sur le navigateur utilisé. Le bouton « Réinitialiser la démo » efface cette progression après confirmation. Les tests du moteur sont dans `tests/daft-punk-companion.test.mjs` et s'exécutent avec `node --test tests/daft-punk-companion.test.mjs` ou via `npm test` à la racine.
 
 ## Règles de jeu
 
@@ -26,7 +26,7 @@ Les robots du prototype sont des formes CSS originales et ne sont pas des reprod
 
 ## Limites actuelles
 
-- La progression est sauvegardée dans le navigateur, pas synchronisée entre appareils.
+- La progression est sauvegardée dans le navigateur, pas synchronisée entre appareils. Les jauges survivent au changement de date ; les missions et récompenses de mini-jeux sont renouvelées chaque jour.
 - Les jauges sont persistantes et ne diminuent pas ; le changement de date renouvelle les missions et mini-jeux.
 - Le changement de date utilise la date locale du navigateur.
 - Les sons des mini-jeux sont visuels seulement à ce stade.
