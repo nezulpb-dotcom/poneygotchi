@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newGame, restoreGame, followFirefly, followPetal } from '../src/core/game.js';
+import { newGame, restoreGame, followFirefly, followPetal, meadowDuet } from '../src/core/game.js';
 
 const firstNight = new Date(2026, 10, 15, 22, 0, 0);
 const nextMorning = new Date(2026, 10, 16, 7, 0, 0);
@@ -102,4 +102,32 @@ test('malformed petal progress is clamped to the supported range', () => {
   assert.equal(restoreGame(game, firstNight).daily.petalsFollowed, 3);
   game.daily.petalsFollowed = -4;
   assert.equal(restoreGame(game, firstNight).daily.petalsFollowed, 0);
+});
+
+
+test('the meadow duet unlocks only after both day and night discoveries', () => {
+  const game = newGame(firstNight);
+  assert.deepEqual(meadowDuet(game, firstNight), { petals: 0, firefly: false, complete: false });
+  for (let i = 0; i < 3; i++) followPetal(game, firstNight);
+  assert.deepEqual(meadowDuet(game, firstNight), { petals: 3, firefly: false, complete: false });
+  followFirefly(game, firstNight);
+  assert.equal(meadowDuet(game, firstNight).complete, false);
+  followFirefly(game, firstNight);
+  assert.deepEqual(meadowDuet(game, firstNight), { petals: 3, firefly: true, complete: true });
+  assert.equal(meadowDuet(game, nextMorning).complete, false);
+  assert.equal(meadowDuet(game, firstNight).complete, true);
+});
+
+test('the duet is read-only and survives restoration without extra rewards', () => {
+  const game = newGame(firstNight);
+  for (let i = 0; i < 3; i++) followPetal(game, firstNight);
+  followFirefly(game, firstNight);
+  followFirefly(game, firstNight);
+  const before = JSON.stringify(game);
+  assert.equal(meadowDuet(game, firstNight).complete, true);
+  assert.equal(JSON.stringify(game), before);
+  const restored = restoreGame(JSON.parse(before), firstNight);
+  assert.equal(meadowDuet(restored, firstNight).complete, true);
+  assert.equal(restored.pet.stars, game.pet.stars);
+  assert.equal(restored.pet.xp, game.pet.xp);
 });

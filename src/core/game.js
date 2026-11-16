@@ -85,6 +85,15 @@ export function followPetal(game, date = new Date()) {
   return { ok: true, step, complete: step === 3, day: game.daily.date };
 }
 
+// A small collectible story beat earned by exploring both daylight and night.
+// Derived from the existing daily progress: no extra save field or reward farming.
+export function meadowDuet(game, date = new Date()) {
+  const day = game.daily?.date === localDateKey(date) ? game.daily : emptyDay(date);
+  const petals = Math.max(0, Math.min(3, Math.floor(Number(day.petalsFollowed) || 0)));
+  const firefly = Boolean(day.fireflyFound) || Number(day.fireflyStep) >= 2;
+  return { petals, firefly, complete: petals === 3 && firefly };
+}
+
 export function grant(game, { stars = 0, xp = 0 } = {}) {
   game.pet.stars += stars;
   game.pet.xp += xp;

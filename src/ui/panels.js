@@ -1,4 +1,4 @@
-import { ITEMS, xpThreshold } from '../core/game.js';
+import { ITEMS, xpThreshold, meadowDuet } from '../core/game.js';
 
 const hearts = (value) => {
   const filled = Math.max(0, Math.min(3, Math.round(value / 100 * 3)));
@@ -34,6 +34,8 @@ export function renderPanel(tab, game, memoryRound = null) {
         <p class="panel-small">Suis trois pétales pendant la journée ; Rosy célébrera cette petite promenade. Aucun bonus à gagner, juste un moment doux.</p>
         <div class="task"><span>✨ Luciole du soir</span><b>${daily.fireflyFound ? 'Vue ce soir' : daily.fireflyStep ? 'Suivie · 1/2' : 'À découvrir la nuit'}</b></div>
         <p class="panel-small">Une petite lueur apparaît dans la prairie la nuit. Touche-la, puis retrouve-la de l’autre côté pour terminer la découverte.</p>
+        <div class="task" role="status" aria-live="polite"><span>📖 Souvenir du pré</span><b>${meadowDuet(game).complete ? '🌸✨ Pétales et luciole réunis !' : 'À composer · jour et nuit'}</b></div>
+        <p class="panel-small">${meadowDuet(game).complete ? 'Rosy se souvient du vent dans les fleurs et de la lumière du soir. Ce souvenir reste dans ton journal jusqu’à demain. ♡' : 'Suis les trois pétales et la luciole le même jour pour découvrir une petite histoire de Rosy. Sans étoiles ni XP supplémentaires.'}</p>
         <p class="panel-small">Pas de quantité d’eau prescrite. Les trois premières confirmations donnent une récompense ; les suivantes restent enregistrées.</p>`;
     }
     case 'shop':
