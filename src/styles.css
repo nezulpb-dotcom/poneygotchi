@@ -198,3 +198,22 @@ button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .firefly-target::after { font-size: 22px; }
 
 @media(prefers-reduced-motion:reduce) { .firefly-target { transition: none !important; } }
+
+
+/* Trois pétales à suivre au fil de la journée : cibles larges, détails discrets. */
+.petal-target { position: absolute; z-index: 6; left: 12px; top: 315px; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; transition: left .38s ease, top .38s ease; }
+.petal-target[hidden] { display: none !important; }
+.petal-target::before { content: ''; position: absolute; left: 24px; top: 20px; width: 9px; height: 15px; border-radius: 80% 0 80% 30%; background: linear-gradient(145deg, #fff0f7, #f5a9d0 72%); box-shadow: 0 0 8px 3px #ffe4f480; transform: rotate(28deg); animation: petal-drift 2.8s ease-in-out infinite; }
+.petal-target::after { content: '✧'; position: absolute; inset: 8px; display: grid; place-items: center; color: #fff4fb; font-size: 15px; text-shadow: 0 0 8px #ffd7ec; opacity: .7; animation: petal-glint 2.2s ease-in-out infinite; }
+.petal-target.petal-second { left: 260px; top: 318px; }
+.petal-target.petal-third { left: 132px; top: 410px; }
+.petal-target.caught::before { animation: petal-caught .54s ease-out both; }
+.petal-target:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@keyframes petal-drift { 0%,100% { transform: translateY(0) rotate(28deg); } 50% { transform: translateY(-7px) rotate(-9deg); } }
+@keyframes petal-glint { 0%,100% { opacity: .3; transform: scale(.85); } 50% { opacity: .95; transform: scale(1.15); } }
+@keyframes petal-caught { 0% { opacity: 1; transform: translate(0,0) scale(1) rotate(28deg); } 100% { opacity: 0; transform: translate(14px,-18px) scale(1.9) rotate(100deg); } }
+@media(prefers-reduced-motion:reduce) {
+  .petal-target { transition: none !important; }
+  .petal-target::before, .petal-target::after { animation: none !important; }
+  .petal-target.caught::before { opacity: .25; }
+}
