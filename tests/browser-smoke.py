@@ -148,6 +148,7 @@ globalThis.Date = FixedDate;"""
     assert petal.is_visible()
 
     petal.click()
+    day_page.wait_for_timeout(80)
     assert day_page.locator('#ponyWrap').get_attribute('data-pose') == 'curious'
     day_page.wait_for_timeout(600)
     assert petal.get_attribute('data-step') == '1'
@@ -157,6 +158,7 @@ globalThis.Date = FixedDate;"""
 
     petal.focus()
     day_page.keyboard.press('Enter')
+    day_page.wait_for_timeout(80)
     assert day_page.locator('#ponyWrap').get_attribute('data-pose') == 'sniff'
     day_page.wait_for_timeout(600)
     assert petal.get_attribute('data-step') == '2'
@@ -165,6 +167,7 @@ globalThis.Date = FixedDate;"""
     assert (third_box['x'], third_box['y']) != (second_box['x'], second_box['y'])
 
     petal.click()
+    day_page.wait_for_timeout(80)
     assert day_page.locator('#ponyWrap').get_attribute('data-pose') == 'play'
     day_page.wait_for_timeout(850)
     assert not petal.is_visible(), 'three petals should complete the daily interaction'
