@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newGame, restoreGame, followFirefly } from '../src/core/game.js';
+import { newGame, restoreGame, followFirefly, followPetal } from '../src/core/game.js';
 
 const firstNight = new Date(2026, 10, 15, 22, 0, 0);
 const nextMorning = new Date(2026, 10, 16, 7, 0, 0);
@@ -56,4 +56,50 @@ test('malformed trail progress is clamped and a completed trail stays complete',
   const restored = restoreGame(legacy, firstNight);
   assert.equal(restored.daily.fireflyStep, 2);
   assert.equal(restored.daily.fireflyFound, true);
+});
+
+
+test('a fresh day starts with no followed petals', () => {
+  const game = newGame(firstNight);
+  assert.equal(game.daily.petalsFollowed, 0);
+});
+
+test('three petal touches complete a gentle daily trail without rewards', () => {
+  const game = newGame(firstNight);
+  const before = { stars: game.pet.stars, xp: game.pet.xp };
+  assert.deepEqual(followPetal(game, firstNight), { ok: true, step: 1, complete: false, day: game.daily.date });
+  assert.deepEqual(followPetal(game, firstNight), { ok: true, step: 2, complete: false, day: game.daily.date });
+  assert.deepEqual(followPetal(game, firstNight), { ok: true, step: 3, complete: true, day: game.daily.date });
+  assert.equal(game.daily.petalsFollowed, 3);
+  assert.deepEqual({ stars: game.pet.stars, xp: game.pet.xp }, before);
+  assert.deepEqual(followPetal(game, firstNight), { ok: false, reason: 'complete', step: 3 });
+});
+
+test('petal progress resets on the next local day', () => {
+  const game = newGame(firstNight);
+  followPetal(game, firstNight);
+  followPetal(game, firstNight);
+  const result = followPetal(game, nextMorning);
+  assert.deepEqual(result, { ok: true, step: 1, complete: false, day: '2026-11-16' });
+  assert.equal(game.daily.petalsFollowed, 1);
+});
+
+test('partial petal progress survives restoration and older saves default safely', () => {
+  const game = newGame(firstNight);
+  followPetal(game, firstNight);
+  const restored = restoreGame(JSON.parse(JSON.stringify(game)), firstNight);
+  assert.equal(restored.daily.petalsFollowed, 1);
+  assert.equal(followPetal(restored, firstNight).step, 2);
+
+  const legacy = newGame(firstNight);
+  delete legacy.daily.petalsFollowed;
+  assert.equal(restoreGame(legacy, firstNight).daily.petalsFollowed, 0);
+});
+
+test('malformed petal progress is clamped to the supported range', () => {
+  const game = newGame(firstNight);
+  game.daily.petalsFollowed = 99;
+  assert.equal(restoreGame(game, firstNight).daily.petalsFollowed, 3);
+  game.daily.petalsFollowed = -4;
+  assert.equal(restoreGame(game, firstNight).daily.petalsFollowed, 0);
 });

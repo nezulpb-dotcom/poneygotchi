@@ -118,5 +118,62 @@ globalThis.Date = FixedDate;"""
     hint_box = page.locator('[data-memory-hint]').bounding_box()
     assert hint_box['y'] + hint_box['height'] <= 480
     assert not errors, errors
-    print('Browser smoke tests OK; no uncaught JS errors')
+
+    # Daytime petal trail: three touches, one keyboard activation, no rewards.
+    day_html = html.replace(
+        'new NativeDate(2026, 10, 15, 22, 0, 0)',
+        'new NativeDate(2026, 10, 15, 14, 0, 0)',
+    )
+    assert day_html != html, 'daytime clock fixture should be present'
+    day_page = browser.new_page(viewport={'width': 320, 'height': 480}, device_scale_factor=1)
+    day_errors = []
+    day_page.on('pageerror', lambda error: day_errors.append(str(error)))
+    day_page.set_content(day_html, wait_until='load')
+    day_page.wait_for_timeout(150)
+    assert day_page.evaluate('new Date().getHours()') == 14
+    assert day_page.locator('#screen').get_attribute('data-scene') == 'day'
+    petal = day_page.locator('#petalTap')
+    assert petal.is_visible(), 'a daytime petal should be available on the lockscreen'
+    first_box = petal.bounding_box()
+    assert first_box['width'] == 56 and first_box['height'] == 56
+
+    day_page.emulate_media(reduced_motion='reduce')
+    assert petal.evaluate('(el) => getComputedStyle(el).transitionDuration') in ('0s', '0s, 0s')
+    assert petal.evaluate('(el) => getComputedStyle(el, "::before").animationName') == 'none'
+    day_page.emulate_media(reduced_motion='no-preference')
+
+    day_page.locator('#screenTap').click()
+    assert not petal.is_visible(), 'the petal target must hide while the HUD is open'
+    day_page.locator('#screenTap').click()
+    assert petal.is_visible()
+
+    petal.click()
+    assert day_page.locator('#ponyWrap').get_attribute('data-pose') == 'curious'
+    day_page.wait_for_timeout(600)
+    assert petal.get_attribute('data-step') == '1'
+    assert 'petal-second' in (petal.get_attribute('class') or '')
+    second_box = petal.bounding_box()
+    assert (second_box['x'], second_box['y']) != (first_box['x'], first_box['y'])
+
+    petal.focus()
+    day_page.keyboard.press('Enter')
+    assert day_page.locator('#ponyWrap').get_attribute('data-pose') == 'sniff'
+    day_page.wait_for_timeout(600)
+    assert petal.get_attribute('data-step') == '2'
+    assert 'petal-third' in (petal.get_attribute('class') or '')
+    third_box = petal.bounding_box()
+    assert (third_box['x'], third_box['y']) != (second_box['x'], second_box['y'])
+
+    petal.click()
+    assert day_page.locator('#ponyWrap').get_attribute('data-pose') == 'play'
+    day_page.wait_for_timeout(850)
+    assert not petal.is_visible(), 'three petals should complete the daily interaction'
+
+    day_page.locator('#screenTap').click()
+    day_page.locator('#openMenu').click()
+    panel_text = day_page.locator('#sheetContent').inner_text()
+    assert 'Pétales de la prairie' in panel_text
+    assert '3/3' in panel_text
+    assert not day_errors, day_errors
+    print('Browser smoke tests OK; firefly and petal interactions have no uncaught JS errors')
     browser.close()

@@ -1,5 +1,5 @@
 import { loadGame, saveGame } from './core/storage.js';
-import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp, followFirefly } from './core/game.js';
+import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp, followFirefly, followPetal } from './core/game.js';
 import { createMemoryRound, revealMemoryCard, revealMemoryHint, clearMemoryHint, recordMemoryWin } from './core/memory-game.js';
 import { memoryReaction } from './core/memory-reactions.js';
 import { createPettingState, petRosy } from './core/petting.js';
@@ -23,6 +23,9 @@ let needAccumulator = 0;
 let lastSaved = Date.now();
 let currentScene = '';
 let fireflyFeedbackUntil = 0;
+let petalFeedbackUntil = 0;
+let petalFeedbackTimer;
+let petalVisualStep = Math.max(0, Math.min(2, Number(game.daily.petalsFollowed) || 0));
 let memoryRound = null;
 let memoryHintTimer;
 let pettingState = createPettingState();
@@ -57,6 +60,29 @@ function updateFireflyTarget() {
   target.classList.toggle('found', visible && game.daily.fireflyFound && feedback);
 }
 
+ 
+function updatePetalTarget() {
+  const target = $('petalTap');
+  if (!target) return;
+  const feedback = Date.now() < petalFeedbackUntil;
+  const panelOpen = $('sheetWrap').classList.contains('open');
+  const savedStep = Math.max(0, Math.min(3, Number(game.daily.petalsFollowed) || 0));
+  const step = feedback ? petalVisualStep : savedStep;
+  const labels = [
+    'Suivre un pétale rose dans la prairie',
+    'Retrouver le pétale près des fleurs',
+    'Suivre le dernier pétale de la prairie',
+  ];
+  const visible = currentScene !== 'night' && !hudOpen && !panelOpen && (savedStep < 3 || feedback);
+  target.dataset.step = String(step);
+  target.setAttribute('aria-label', labels[Math.min(2, step)]);
+  target.classList.toggle('petal-second', step === 1);
+  target.classList.toggle('petal-third', step === 2);
+  target.classList.toggle('caught', feedback);
+  target.hidden = !visible;
+  target.disabled = feedback || savedStep >= 3;
+}
+ 
 function hideHud() {
   hudOpen = false;
   clearTimeout(hudHideTimer);
@@ -64,10 +90,12 @@ function hideHud() {
   $('screen').classList.remove('hud-active');
   $('hud').setAttribute('aria-hidden', 'true');
   updateFireflyTarget();
+  updatePetalTarget();
 }
 function showHud() {
   hudOpen = true;
   updateFireflyTarget();
+  updatePetalTarget();
   $('hud').classList.add('open');
   $('screen').classList.add('hud-active');
   $('hud').setAttribute('aria-hidden', 'false');
@@ -82,6 +110,7 @@ function showPanel(tab = 'missions') {
   $('sheetWrap').classList.add('open');
   $('sheetWrap').setAttribute('aria-hidden', 'false');
   updateFireflyTarget();
+  updatePetalTarget();
   drawPanel();
   clearTimeout(hudHideTimer);
   $('closeSheet').focus();
@@ -142,6 +171,7 @@ function updateTime() {
     $('landscape').style.backgroundImage = `url('./assets/backgrounds/meadow_${scene}.png')`;
   }
   updateFireflyTarget();
+  updatePetalTarget();
   maybeReminder(date);
 }
 function maybeReminder(now) {
@@ -195,6 +225,34 @@ $('fireflyTap').addEventListener('click', () => {
     fireflyFeedbackUntil = 0;
     updateFireflyTarget();
   }, result.found ? 950 : 700);
+});
+$('petalTap').addEventListener('click', () => {
+  if (Date.now() < petalFeedbackUntil) return;
+  const result = followPetal(game, new Date());
+  if (!result.ok) { updatePetalTarget(); return; }
+
+  const duration = result.complete ? 780 : 540;
+  petalVisualStep = result.step - 1;
+  petalFeedbackUntil = Date.now() + duration;
+  pony.direction = result.step === 2 ? 1 : -1;
+  const poses = ['curious', 'sniff', 'play'];
+  const messages = [
+    'Un pétale rose s’envole… Rosy le suit du regard. 🌸',
+    'Le vent emporte le pétale plus loin… Rosy le renifle doucement. 🍃',
+    'Trois pétales retrouvés ! Rosy fait une petite danse. ✨',
+  ];
+  pony.action(poses[result.step - 1], result.complete ? 1800 : 1250);
+  $('statusPetal').textContent = messages[result.step - 1];
+  say(messages[result.step - 1]);
+  updatePetalTarget();
+  save();
+
+  clearTimeout(petalFeedbackTimer);
+  petalFeedbackTimer = setTimeout(() => {
+    petalFeedbackUntil = 0;
+    petalVisualStep = result.step;
+    updatePetalTarget();
+  }, duration);
 });
 $('petTap').addEventListener('click', (event) => {
   const button = $('petTap');

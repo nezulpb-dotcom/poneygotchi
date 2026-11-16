@@ -15,7 +15,7 @@ export const localDateKey = (date = new Date()) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 export function emptyDay(date = new Date()) {
-  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false, fireflyStep: 0, fireflyFound: false };
+  return { date: localDateKey(date), meals: { morning: false, noon: false, evening: false }, water: 0, movement: false, pause: false, mealsBonus: false, memoryRewarded: false, fireflyStep: 0, fireflyFound: false, petalsFollowed: 0 };
 }
 
 export function newGame(date = new Date()) {
@@ -51,6 +51,7 @@ export function restoreGame(raw, date = new Date()) {
   if (merged.daily.date !== localDateKey(date)) merged.daily = emptyDay(date);
   merged.daily.fireflyStep = Math.max(0, Math.min(2, Math.floor(Number(merged.daily.fireflyStep) || 0)));
   merged.daily.fireflyFound = Boolean(merged.daily.fireflyFound) || merged.daily.fireflyStep >= 2;
+  merged.daily.petalsFollowed = Math.max(0, Math.min(3, Math.floor(Number(merged.daily.petalsFollowed) || 0)));
   if (!ITEMS.some((i) => i.id === merged.equipped) || !merged.inventory.includes(merged.equipped)) merged.equipped = 'none';
   merged.updatedAt = Number.isFinite(merged.updatedAt) ? merged.updatedAt : date.getTime();
   return merged;
@@ -70,6 +71,18 @@ export function followFirefly(game, date = new Date()) {
   const found = nextStep === 2;
   if (found) game.daily.fireflyFound = true;
   return { ok: true, step: nextStep, found, day: game.daily.date };
+}
+
+ 
+// Follow three drifting petals during the day. This is a calm daily interaction,
+// not a currency or XP source; partial progress survives a browser reload.
+export function followPetal(game, date = new Date()) {
+  advanceDay(game, date);
+  const current = Math.max(0, Math.min(3, Math.floor(Number(game.daily.petalsFollowed) || 0)));
+  if (current >= 3) return { ok: false, reason: 'complete', step: 3 };
+  const step = current + 1;
+  game.daily.petalsFollowed = step;
+  return { ok: true, step, complete: step === 3, day: game.daily.date };
 }
 
 export function grant(game, { stars = 0, xp = 0 } = {}) {
