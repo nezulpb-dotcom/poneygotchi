@@ -14,6 +14,7 @@ const pony = new PonyAnimator($('ponySprite'), (habit) => {
 });
 let hudOpen = false;
 let panelTab = 'missions';
+let selectedAlbumDay = null;
 let hudHideTimer;
 let bubbleTimer;
 let sceneTimer;
@@ -124,7 +125,7 @@ function closePanel() {
 function drawPanel(preserveScroll = false) {
   const box = $('sheetContent');
   const scroll = preserveScroll ? $('sheetWrap').querySelector('.bottom-sheet').scrollTop : 0;
-  box.innerHTML = renderPanel(panelTab, game, memoryRound);
+  box.innerHTML = renderPanel(panelTab, game, memoryRound, selectedAlbumDay);
   $('sheetWrap').querySelector('.bottom-sheet').scrollTop = scroll;
   for (const button of document.querySelectorAll('[data-tab]')) button.classList.toggle('active', button.dataset.tab === panelTab);
 }
@@ -299,6 +300,14 @@ for (const button of document.querySelectorAll('[data-tab]')) button.addEventLis
 $('sheetContent').addEventListener('click', (e) => {
   const button = e.target.closest('button');
   if (!button) return;
+  if (button.hasAttribute('data-album-day')) {
+    const day = button.dataset.albumDay;
+    if (game.meadowAlbum?.includes(day)) {
+      selectedAlbumDay = day;
+      drawPanel(true);
+    }
+    return;
+  }
   if (button.hasAttribute('data-memory-start')) {
     clearTimeout(memoryHintTimer);
     const pairCount = Number(button.dataset.memoryStart) === 4 ? 4 : 3;
