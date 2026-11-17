@@ -110,7 +110,7 @@ export function collectMeadowMemory(game, date = new Date()) {
 // Only dates already collected in the album are accepted.
 export function meadowMemoryStory(game, day) {
   if (!Array.isArray(game.meadowAlbum) || !game.meadowAlbum.includes(day)) return null;
-  if (typeof day !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}$/.test(day)) return null;
+  if (typeof day !== 'string' || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day)) return null;
   const [year, month, date] = day.split('-').map(Number);
   const valid = new Date(Date.UTC(year, month - 1, date));
   if (valid.getUTCFullYear() !== year || valid.getUTCMonth() !== month - 1 || valid.getUTCDate() !== date) return null;
