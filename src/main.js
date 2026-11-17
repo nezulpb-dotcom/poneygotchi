@@ -1,5 +1,5 @@
 import { loadGame, saveGame } from './core/storage.js';
-import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp, followFirefly, followPetal } from './core/game.js';
+import { advanceDay, buyOrEquip, care, completeQuest, decayNeeds, ITEMS, grant, clamp, followFirefly, followPetal, collectMeadowMemory } from './core/game.js';
 import { createMemoryRound, revealMemoryCard, revealMemoryHint, clearMemoryHint, recordMemoryWin } from './core/memory-game.js';
 import { memoryReaction } from './core/memory-reactions.js';
 import { createPettingState, petRosy } from './core/petting.js';
@@ -219,6 +219,8 @@ $('fireflyTap').addEventListener('click', () => {
     : 'La luciole s’envole de l’autre côté… suis-la encore !';
   $('statusPetal').textContent = message;
   say(message);
+  const memory = collectMeadowMemory(game);
+  if (memory.collected) say('📖 Nouveau souvenir dans l’album du pré !');
   updateFireflyTarget();
   save();
   setTimeout(() => {
@@ -244,6 +246,8 @@ $('petalTap').addEventListener('click', () => {
   pony.action(poses[result.step - 1], result.complete ? 1800 : 1250);
   $('statusPetal').textContent = messages[result.step - 1];
   say(messages[result.step - 1]);
+  const memory = collectMeadowMemory(game);
+  if (memory.collected) say('📖 Nouveau souvenir dans l’album du pré !');
   updatePetalTarget();
   save();
 
