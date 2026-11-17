@@ -1,4 +1,4 @@
-import { ITEMS, xpThreshold, meadowDuet } from '../core/game.js';
+import { ITEMS, xpThreshold, meadowDuet, meadowMemoryStory } from '../core/game.js';
 
 const hearts = (value) => {
   const filled = Math.max(0, Math.min(3, Math.round(value / 100 * 3)));
@@ -17,7 +17,7 @@ export function renderMiniStats(pet) {
 const questButton = (type, done, label = 'Noter') =>
   `<button class="small-btn" data-quest="${type}" ${done ? 'disabled' : ''}>${done ? '✓ Noté' : label}</button>`;
 
-export function renderPanel(tab, game, memoryRound = null) {
+export function renderPanel(tab, game, memoryRound = null, selectedAlbumDay = null) {
   const { pet, daily } = game;
   switch (tab) {
     case 'missions': {
@@ -37,7 +37,8 @@ export function renderPanel(tab, game, memoryRound = null) {
         <div class="task" role="status" aria-live="polite"><span>📖 Souvenir du pré</span><b>${meadowDuet(game).complete ? '🌸✨ Pétales et luciole réunis !' : 'À composer · jour et nuit'}</b></div>
         <p class="panel-small">${meadowDuet(game).complete ? 'Rosy se souvient du vent dans les fleurs et de la lumière du soir. Ce souvenir reste dans ton journal jusqu’à demain. ♡' : 'Suis les trois pétales et la luciole le même jour pour découvrir une petite histoire de Rosy. Sans étoiles ni XP supplémentaires.'}</p>
         <div class="panel-kicker">Album du pré · ${game.meadowAlbum?.length || 0} souvenir(s)</div>
-        <p class="panel-small">${game.meadowAlbum?.length ? '📖 ' + [...game.meadowAlbum].reverse().slice(0, 5).map(day => day.split('-').reverse().join('/')).join(' · ') : 'Ton premier souvenir sera conservé ici quand tu auras suivi les pétales et la luciole le même jour.'}</p>
+        <div class="memory-mode-list">${game.meadowAlbum?.length ? [...game.meadowAlbum].reverse().slice(0, 5).map(day => `<button class="small-btn" data-album-day="${day}" aria-pressed="${selectedAlbumDay === day}">📖 ${day.split('-').reverse().join('/')}</button>`).join('') : '<p class="panel-small">Ton premier souvenir sera conservé ici quand tu auras suivi les pétales et la luciole le même jour.</p>'}</div>
+        ${meadowMemoryStory(game, selectedAlbumDay) ? `<p class="panel-small" role="status" aria-live="polite">📖 ${meadowMemoryStory(game, selectedAlbumDay).text}</p>` : ''}
         <p class="panel-small">Les 30 derniers jours de découverte sont conservés localement, sans pénalité pour les jours manqués.</p>
         <p class="panel-small">Pas de quantité d’eau prescrite. Les trois premières confirmations donnent une récompense ; les suivantes restent enregistrées.</p>`;
     }
