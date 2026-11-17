@@ -106,6 +106,24 @@ export function collectMeadowMemory(game, date = new Date()) {
   return { collected: true, count: game.meadowAlbum.length, day };
 }
 
+// A saved day can be revisited as a tiny story, without changing the save.
+// Only dates already collected in the album are accepted.
+export function meadowMemoryStory(game, day) {
+  if (!Array.isArray(game.meadowAlbum) || !game.meadowAlbum.includes(day)) return null;
+  if (typeof day !== 'string' || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day)) return null;
+  const [year, month, date] = day.split('-').map(Number);
+  const valid = new Date(Date.UTC(year, month - 1, date));
+  if (valid.getUTCFullYear() !== year || valid.getUTCMonth() !== month - 1 || valid.getUTCDate() !== date) return null;
+  const stories = [
+    'Rosy a suivi les pétales dans le vent, puis une luciole lui a montré le chemin des étoiles.',
+    'Sous les fleurs du matin, Rosy a trouvé du courage ; le soir, une petite lumière lui a souri.',
+    'Trois pétales ont dansé autour de Rosy. Une luciole a gardé leur secret jusqu’à la nuit.',
+    'Rosy se rappelle la douceur de la prairie et cette lueur qui ne voulait pas partir.',
+  ];
+  const variant = (year * 372 + month * 31 + date) % stories.length;
+  return { day, text: stories[variant] };
+}
+
 export function grant(game, { stars = 0, xp = 0 } = {}) {
   game.pet.stars += stars;
   game.pet.xp += xp;
