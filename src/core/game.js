@@ -23,6 +23,7 @@ export function newGame(date = new Date()) {
     version: 8,
     pet: { hunger: 82, happiness: 90, energy: 78, hygiene: 88, level: 1, xp: 0, stars: 30 },
     daily: emptyDay(date),
+    meadowAlbum: [],
     inventory: ['none'],
     equipped: 'none',
     settings: { waterReminder: false, waterMinutes: 90, nextWaterAt: 0 },
@@ -41,6 +42,7 @@ export function restoreGame(raw, date = new Date()) {
     settings: { ...fresh.settings, ...(raw.settings || {}) },
     inventory: Array.isArray(raw.inventory) ? [...new Set(['none', ...raw.inventory])] : ['none'],
     lastCareAward: raw.lastCareAward || {},
+    meadowAlbum: Array.isArray(raw.meadowAlbum) ? [...new Set(raw.meadowAlbum.filter((day) => typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day)))].slice(-30) : [],
   };
   for (const k of ['hunger', 'happiness', 'energy', 'hygiene']) {
     merged.pet[k] = clamp(Number(merged.pet[k]) || 0);
@@ -92,6 +94,16 @@ export function meadowDuet(game, date = new Date()) {
   const petals = Math.max(0, Math.min(3, Math.floor(Number(day.petalsFollowed) || 0)));
   const firefly = Boolean(day.fireflyFound) || Number(day.fireflyStep) >= 2;
   return { petals, firefly, complete: petals === 3 && firefly };
+}
+
+// Keep a small, local album of completed meadow stories. Repeated taps cannot
+// duplicate a day; older saves remain valid and no reward is granted.
+export function collectMeadowMemory(game, date = new Date()) {
+  const story = meadowDuet(game, date);
+  const day = localDateKey(date);
+  if (!story.complete || game.meadowAlbum.includes(day)) return { collected: false, count: game.meadowAlbum.length };
+  game.meadowAlbum = [...game.meadowAlbum, day].slice(-30);
+  return { collected: true, count: game.meadowAlbum.length, day };
 }
 
 export function grant(game, { stars = 0, xp = 0 } = {}) {
