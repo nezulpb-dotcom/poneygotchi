@@ -36,6 +36,9 @@ export function renderPanel(tab, game, memoryRound = null) {
         <p class="panel-small">Une petite lueur apparaît dans la prairie la nuit. Touche-la, puis retrouve-la de l’autre côté pour terminer la découverte.</p>
         <div class="task" role="status" aria-live="polite"><span>📖 Souvenir du pré</span><b>${meadowDuet(game).complete ? '🌸✨ Pétales et luciole réunis !' : 'À composer · jour et nuit'}</b></div>
         <p class="panel-small">${meadowDuet(game).complete ? 'Rosy se souvient du vent dans les fleurs et de la lumière du soir. Ce souvenir reste dans ton journal jusqu’à demain. ♡' : 'Suis les trois pétales et la luciole le même jour pour découvrir une petite histoire de Rosy. Sans étoiles ni XP supplémentaires.'}</p>
+        <div class="panel-kicker">Album du pré · ${game.meadowAlbum?.length || 0} souvenir(s)</div>
+        <p class="panel-small">${game.meadowAlbum?.length ? '📖 ' + [...game.meadowAlbum].reverse().slice(0, 5).map(day => day.split('-').reverse().join('/')).join(' · ') : 'Ton premier souvenir sera conservé ici quand tu auras suivi les pétales et la luciole le même jour.'}</p>
+        <p class="panel-small">Les 30 derniers jours de découverte sont conservés localement, sans pénalité pour les jours manqués.</p>
         <p class="panel-small">Pas de quantité d’eau prescrite. Les trois premières confirmations donnent une récompense ; les suivantes restent enregistrées.</p>`;
     }
     case 'shop':
